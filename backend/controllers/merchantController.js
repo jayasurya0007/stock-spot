@@ -39,7 +39,6 @@ export const addMerchant = async (req, res) => {
 
 export const getMerchantProducts = async (req, res) => {
   const { merchant_id } = req.params;
-
   try {
     const conn = await pool.getConnection();
     const [rows] = await conn.execute(
@@ -47,10 +46,22 @@ export const getMerchantProducts = async (req, res) => {
       [merchant_id]
     );
     conn.release();
-
     res.json({ products: rows });
   } catch (err) {
     console.error('Failed to fetch merchant products:', err);
     res.status(500).json({ error: 'Failed to fetch products', details: err.message });
+  }
+};
+
+// Get all merchants
+export const getMerchants = async (req, res) => {
+  try {
+    const conn = await pool.getConnection();
+    const [rows] = await conn.execute('SELECT * FROM merchants ORDER BY shop_name');
+    conn.release();
+    res.json(rows);
+  } catch (err) {
+    console.error('Failed to fetch merchants:', err);
+    res.status(500).json({ error: 'Failed to fetch merchants', details: err.message });
   }
 };

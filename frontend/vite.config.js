@@ -13,7 +13,7 @@ export default defineConfig({
       }
     }
   },
-  esbuild: {
-    jsx: 'automatic', // Add this line
-  }
+  resolve: {
+    extensions: ['.js', '.jsx', '.ts', '.tsx'],
+  },
 })
