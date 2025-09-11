@@ -1,3 +1,5 @@
+//routes/search.js
+
 import express from 'express';
 import { searchProducts, getMapData } from '../controllers/searchController.js';
 

@@ -1,3 +1,5 @@
+//models/Product.js
+
 import pool from '../config/database.js';
 
 class Product {

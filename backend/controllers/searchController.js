@@ -1,3 +1,5 @@
+//controllers/searchController.js
+
 import { rewriteQueryWithPerplexity } from '../utils/perplexity.js';
 import { getEmbedding } from '../utils/embeddings.js';
 import pool from '../config/database.js';

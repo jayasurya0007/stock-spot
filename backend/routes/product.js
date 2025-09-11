@@ -1,3 +1,5 @@
+//routes/product.js
+
 import express from 'express';
 import { addProduct, updateProduct, deleteProduct } from '../controllers/productController.js';
 import { authenticateToken, authorizeRoles } from '../middleware/auth.js';

@@ -1,3 +1,5 @@
+//utils/geocode.js
+
 export async function geocodeAddress(address) {
   try {
     const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${process.env.GOOGLE_MAPS_API_KEY}`;

@@ -1,3 +1,5 @@
+//models/Merchant.js
+
 import pool from '../config/database.js';
 
 class Merchant {

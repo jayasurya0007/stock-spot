@@ -1,3 +1,5 @@
+//controllers/productController.js
+
 import { getEmbedding } from '../utils/embeddings.js';
 import pool from '../config/database.js';
 

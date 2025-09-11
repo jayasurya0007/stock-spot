@@ -1,3 +1,5 @@
+//controllers/merchatController.js
+
 import { geocodeAddress } from '../utils/geocode.js';
 import pool from '../config/database.js';
 

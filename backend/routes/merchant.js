@@ -1,3 +1,5 @@
+//routes/merchant.js
+
 import express from 'express';
 import { addMerchant, getMerchantProducts } from '../controllers/merchantController.js';
 import { authenticateToken, authorizeRoles } from '../middleware/auth.js';

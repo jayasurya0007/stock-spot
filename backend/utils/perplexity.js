@@ -1,3 +1,5 @@
+//utils/perplexity.js
+
 export async function rewriteQueryWithPerplexity(query) {
   try {
     const response = await fetch("https://api.perplexity.ai/chat/completions", {
