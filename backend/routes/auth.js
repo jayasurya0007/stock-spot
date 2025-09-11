@@ -7,51 +7,7 @@ import pool from '../config/database.js';
 
 const router = express.Router();
 
-// Mock user data with plain text passwords for testing
-const mockUsers = [
-  { id: 1, email: 'admin@stockspot.com', password: 'password', role: 'admin' },
-  { id: 2, email: 'merchant@example.com', password: 'password', role: 'merchant' },
-  { id: 3, email: 'user@example.com', password: 'password', role: 'user' }
-];
-
-// Login endpoint
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required' });
-  }
-
-  try {
-    // Find user by email
-    const user = mockUsers.find(u => u.email === email);
-    
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    // Check password (for demo, we're using plain text comparison)
-    if (password !== user.password) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'fallback_secret',
-      { expiresIn: '24h' }
-    );
-
-    res.json({ 
-      token, 
-      user: { id: user.id, email: user.email, role: user.role } 
-    });
-  } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ error: 'Login failed' });
-  }
-});
-
-// Register endpoint (simplified)
+// Register new user
 router.post('/register', async (req, res) => {
   const { email, password, role = 'user' } = req.body;
 
@@ -60,37 +16,75 @@ router.post('/register', async (req, res) => {
   }
 
   try {
-    // Check if user already exists
-    const existingUser = mockUsers.find(u => u.email === email);
-    if (existingUser) {
-      return res.status(400).json({ error: 'User already exists' });
-    }
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const conn = await pool.getConnection();
     
-    // Create new user (in a real app, you would hash the password)
-    const newUser = {
-      id: mockUsers.length + 1,
-      email,
-      password, // In production, you should hash this
-      role
-    };
+    const [result] = await conn.execute(
+      'INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)',
+      [email, hashedPassword, role]
+    );
     
-    mockUsers.push(newUser);
-    
-    // Generate token
     const token = jwt.sign(
-      { id: newUser.id, email: newUser.email, role: newUser.role },
-      process.env.JWT_SECRET || 'fallback_secret',
+      { id: result.insertId, email, role },
+      process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
 
-    res.status(201).json({ 
+    conn.release();
+    
+    res.status(201).json({
       token,
-      message: 'User registered successfully',
-      user: { id: newUser.id, email: newUser.email, role: newUser.role }
+      user: { id: result.insertId, email, role }
     });
   } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ error: 'User already exists' });
+    }
     console.error('Registration error:', err);
     res.status(500).json({ error: 'Registration failed' });
+  }
+});
+
+// Login user
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required' });
+  }
+
+  try {
+    const conn = await pool.getConnection();
+    const [rows] = await conn.execute(
+      'SELECT * FROM users WHERE email = ?',
+      [email]
+    );
+    conn.release();
+
+    if (rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const user = rows[0];
+    const isValidPassword = await bcrypt.compare(password, user.password_hash);
+
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      token,
+      user: { id: user.id, email: user.email, role: user.role }
+    });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Login failed' });
   }
 });
 

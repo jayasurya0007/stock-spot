@@ -18,8 +18,8 @@ export const addMerchant = async (req, res) => {
 
     const conn = await pool.getConnection();
     const [result] = await conn.execute(
-      'INSERT INTO merchants (shop_name, address, latitude, longitude, owner_name, phone) VALUES (?, ?, ?, ?, ?, ?)',
-      [shop_name, address, coords.lat, coords.lng, owner_name || null, phone || null]
+      'INSERT INTO merchants (shop_name, address, latitude, longitude, owner_name, phone, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [shop_name, address, coords.lat, coords.lng, owner_name || null, phone || null, req.user.id]
     );
     conn.release();
 
@@ -33,7 +33,7 @@ export const addMerchant = async (req, res) => {
     });
   } catch (err) {
     console.error('Merchant add failed:', err);
-    res.status(500).json({ error: 'Failed to add merchant', details: err.message });
+    res.status(500).json({ error: 'Failed to add merchant' });
   }
 };
 
