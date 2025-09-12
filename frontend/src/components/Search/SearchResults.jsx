@@ -1,13 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SearchBar from './SearchBar';
 import { searchService } from '../../services/search';
-import { APIProvider, Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps';
+import LeafletMap from '../Map/LeafletMap';
 
 const SearchResults = () => {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [mapMerchant, setMapMerchant] = useState(null);
+  const [userLocation, setUserLocation] = useState({ lat: null, lng: null });
+
+  // Get user location for directions
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+      );
+    }
+  }, []);
 
   const handleSearch = async (searchData) => {
     try {
@@ -46,28 +56,31 @@ const SearchResults = () => {
           ))}
         </div>
       )}
-      {/* Modal for Google Map */}
+      {/* Modal for Merchant Location using Leaflet */}
       {mapMerchant && (
         <div className="modal" style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: '#fff', padding: 20, borderRadius: 8, minWidth: 350, minHeight: 350, position: 'relative' }}>
             <button style={{ position: 'absolute', top: 10, right: 10 }} onClick={() => setMapMerchant(null)}>Close</button>
             <h3>{mapMerchant.shop_name} Location</h3>
-            <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
-              <Map
-                defaultZoom={14}
-                defaultCenter={{ lat: mapMerchant.latitude, lng: mapMerchant.longitude }}
-                mapId={import.meta.env.VITE_GOOGLE_MAPS_MAP_ID}
-                style={{ width: 320, height: 320 }}
-                gestureHandling={'greedy'}
-                disableDefaultUI={true}
+            <LeafletMap
+              center={[mapMerchant.latitude, mapMerchant.longitude]}
+              markers={[{
+                position: [mapMerchant.latitude, mapMerchant.longitude],
+                popup: `<b>${mapMerchant.shop_name}</b>`
+              }]}
+              key={mapMerchant.id || mapMerchant.shop_name}
+            />
+            <div style={{ marginTop: 16, textAlign: 'center' }}>
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&destination=${mapMerchant.latitude},${mapMerchant.longitude}${userLocation.lat && userLocation.lng ? `&origin=${userLocation.lat},${userLocation.lng}` : ''}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-primary"
+                style={{ display: 'inline-block', marginTop: 8 }}
               >
-                <AdvancedMarker
-                  position={{ lat: mapMerchant.latitude, lng: mapMerchant.longitude }}
-                >
-                  <Pin background={'#22ccff'} borderColor={'#1e89a1'} glyphColor={'#0f677a'} />
-                </AdvancedMarker>
-              </Map>
-            </APIProvider>
+                Get Directions (Google Maps)
+              </a>
+            </div>
           </div>
         </div>
       )}

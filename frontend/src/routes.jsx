@@ -7,7 +7,6 @@ import Layout from './components/Layout/Layout';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import MerchantDashboard from './components/Merchant/MerchantDashboard';
-import AddMerchant from './components/Merchant/AddMerchant';
 import MerchantProducts from './components/Merchant/MerchantProducts';
 import AddProduct from './components/Product/AddProduct';
 import EditProduct from './components/Product/EditProduct';
@@ -25,33 +24,31 @@ const ProtectedRoute = ({ children }) => {
 };
 
 const AppRoutes = () => {
-  const { user } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
+  if (loading) return <div className="loading">Loading...</div>;
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <Layout />
-          </ProtectedRoute>
-        }
-      >
-        {/* Only merchant users can access merchant/product management */}
+      {/* Public landing page: MapView before login */}
+      {!isAuthenticated && <>
+        <Route path="/" element={<MapView publicView={true} />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="*" element={<MapView publicView={true} />} />
+      </>}
+      {/* Authenticated routes */}
+      {isAuthenticated && <Route path="/" element={<Layout />}>
+        {/* Merchant dashboard and inventory management */}
         {user?.role === 'merchant' && <>
           <Route index element={<MerchantDashboard />} />
-          <Route path="merchants/add" element={<AddMerchant />} />
-          <Route path="merchants/:id/products" element={<MerchantProducts />} />
+          <Route path="products" element={<MerchantProducts />} />
           <Route path="products/add" element={<AddProduct />} />
           <Route path="products/edit/:id" element={<EditProduct />} />
         </>}
-        {/* All users can search and view map */}
+        {/* User dashboard: product search and map */}
+        {user?.role !== 'merchant' && <Route index element={<SearchResults />} />}
         <Route path="search" element={<SearchResults />} />
         <Route path="map" element={<MapView />} />
-        {/* Normal users see search as default dashboard */}
-        {user?.role !== 'merchant' && <Route index element={<SearchResults />} />}
-      </Route>
+      </Route>}
     </Routes>
   );
 };

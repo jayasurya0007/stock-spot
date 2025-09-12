@@ -9,7 +9,7 @@ const router = express.Router();
 
 // Register new user
 router.post('/register', async (req, res) => {
-  const { email, password, role = 'user' } = req.body;
+  const { email, password, role = 'user', latitude, longitude } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password are required' });
@@ -18,23 +18,37 @@ router.post('/register', async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 12);
     const conn = await pool.getConnection();
-    
+
+    // Create user
     const [result] = await conn.execute(
       'INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)',
       [email, hashedPassword, role]
     );
-    
+    const userId = result.insertId;
+
+    // If merchant, create merchant record with GPS
+    if (role === 'merchant') {
+      if (!latitude || !longitude) {
+        conn.release();
+        return res.status(400).json({ error: 'Merchant registration requires latitude and longitude' });
+      }
+      await conn.execute(
+        'INSERT INTO merchants (user_id, latitude, longitude) VALUES (?, ?, ?)',
+        [userId, latitude, longitude]
+      );
+    }
+
     const token = jwt.sign(
-      { id: result.insertId, email, role },
+      { id: userId, email, role },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
 
     conn.release();
-    
+
     res.status(201).json({
       token,
-      user: { id: result.insertId, email, role }
+      user: { id: userId, email, role }
     });
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') {
