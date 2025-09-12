@@ -25,6 +25,7 @@ const ProtectedRoute = ({ children }) => {
 };
 
 const AppRoutes = () => {
+  const { user } = useAuth();
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
@@ -37,13 +38,19 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       >
-        <Route index element={<MerchantDashboard />} />
-        <Route path="merchants/add" element={<AddMerchant />} />
-        <Route path="merchants/:id/products" element={<MerchantProducts />} />
-        <Route path="products/add" element={<AddProduct />} />
-        <Route path="products/edit/:id" element={<EditProduct />} />
+        {/* Only merchant users can access merchant/product management */}
+        {user?.role === 'merchant' && <>
+          <Route index element={<MerchantDashboard />} />
+          <Route path="merchants/add" element={<AddMerchant />} />
+          <Route path="merchants/:id/products" element={<MerchantProducts />} />
+          <Route path="products/add" element={<AddProduct />} />
+          <Route path="products/edit/:id" element={<EditProduct />} />
+        </>}
+        {/* All users can search and view map */}
         <Route path="search" element={<SearchResults />} />
         <Route path="map" element={<MapView />} />
+        {/* Normal users see search as default dashboard */}
+        {user?.role !== 'merchant' && <Route index element={<SearchResults />} />}
       </Route>
     </Routes>
   );

@@ -21,15 +21,19 @@ const Navbar = () => {
           <ul className="nav-menu">
             {user && (
               <>
-                <li>
-                  <Link to="/" className="nav-link">Dashboard</Link>
-                </li>
+                {/* Merchant dashboard link only for merchants */}
+                {user.role === 'merchant' && (
+                  <li>
+                    <Link to="/" className="nav-link">Dashboard</Link>
+                  </li>
+                )}
                 <li>
                   <Link to="/map" className="nav-link">Map View</Link>
                 </li>
                 <li>
                   <Link to="/search" className="nav-link">Search</Link>
                 </li>
+                {/* Only merchant can add merchant */}
                 {user.role === 'merchant' && (
                   <li>
                     <Link to="/merchants/add" className="nav-link">Add Merchant</Link>

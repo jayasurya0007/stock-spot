@@ -26,6 +26,11 @@ const MapView = () => {
   if (loading) return <div className="loading">Loading map data...</div>;
   if (error) return <div className="error">{error}</div>;
 
+  // Center on first merchant if available, else Chennai
+  const defaultCenter = merchants.length > 0
+    ? { lat: merchants[0].latitude, lng: merchants[0].longitude }
+    : { lat: 13.0827, lng: 80.2707 };
+
   return (
     <div className="container">
       <h1>Merchant Map View</h1>
@@ -33,7 +38,7 @@ const MapView = () => {
         <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
           <Map
             defaultZoom={10}
-            defaultCenter={{ lat: 13.0827, lng: 80.2707 }} // Chennai coordinates
+            defaultCenter={defaultCenter}
             mapId={import.meta.env.VITE_GOOGLE_MAPS_MAP_ID}
             gestureHandling={'greedy'}
             disableDefaultUI={true}
@@ -51,7 +56,6 @@ const MapView = () => {
                 />
               </AdvancedMarker>
             ))}
-            
             {selectedMerchant && (
               <InfoWindow
                 position={{ 

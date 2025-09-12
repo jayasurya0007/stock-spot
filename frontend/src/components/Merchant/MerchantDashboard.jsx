@@ -1,30 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { merchantService } from '../../services/merchants';
+import { useAuth } from '../../context/AuthContext';
 
 const MerchantDashboard = () => {
   const [merchants, setMerchants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const { user } = useAuth();
   useEffect(() => {
     const fetchMerchants = async () => {
       try {
         const data = await merchantService.getMerchants();
-        setMerchants(data);
+        // Only show merchants created by this user
+        setMerchants(data.filter(m => m.user_id === user.id));
       } catch (err) {
         setError('Failed to fetch merchants');
       } finally {
         setLoading(false);
       }
     };
-
-    fetchMerchants();
-  }, []);
+    if (user?.role === 'merchant') fetchMerchants();
+  }, [user]);
 
   if (loading) return <div className="loading">Loading...</div>;
   if (error) return <div className="error">{error}</div>;
 
+  if (user?.role !== 'merchant') return null;
   return (
     <div className="container">
       <h1>Merchant Dashboard</h1>
