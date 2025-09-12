@@ -1,59 +1,70 @@
 import React, { useState } from 'react';
 
-const SearchBar = ({ onSearch, userLocation, locationError }) => {
+const SearchBar = ({ onSearch }) => {
   const [query, setQuery] = useState('');
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
-  const [distance, setDistance] = useState(5000);
-  const [isGettingLocation, setIsGettingLocation] = useState(false);
-  const [locationSuccess, setLocationSuccess] = useState('');
+  const [distance, setDistance] = useState('5');
+  const [distanceUnit, setDistanceUnit] = useState('km');
+  const [gettingLocation, setGettingLocation] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    if (!query || !lat || !lng) {
+    if (!query || !lat || !lng || !distance) {
       alert('Please fill in all fields');
       return;
     }
+    
+    // Convert distance to meters based on selected unit
+    const distanceInMeters = distanceUnit === 'km' 
+      ? parseFloat(distance) * 1000 
+      : parseFloat(distance);
     
     onSearch({
       query,
       lat: parseFloat(lat),
       lng: parseFloat(lng),
-      distance: parseInt(distance)
+      distance: distanceInMeters
     });
   };
 
   const handleUseCurrentLocation = () => {
-    setLocationSuccess('');
-    if (userLocation.lat && userLocation.lng) {
-      setLat(userLocation.lat.toString());
-      setLng(userLocation.lng.toString());
-      setLocationSuccess('✅ Location set successfully!');
-      setTimeout(() => setLocationSuccess(''), 3000);
-    } else {
-      setIsGettingLocation(true);
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            setLat(latitude.toString());
-            setLng(longitude.toString());
-            setIsGettingLocation(false);
-            setLocationSuccess('✅ Location set successfully!');
-            setTimeout(() => setLocationSuccess(''), 3000);
-          },
-          (error) => {
-            console.error('Error getting location:', error);
-            alert('Unable to get your current location. Please enter coordinates manually.');
-            setIsGettingLocation(false);
-          }
-        );
-      } else {
-        alert('Geolocation is not supported by this browser.');
-        setIsGettingLocation(false);
-      }
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by this browser');
+      return;
     }
+
+    setGettingLocation(true);
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLat(position.coords.latitude.toString());
+        setLng(position.coords.longitude.toString());
+        setGettingLocation(false);
+      },
+      (error) => {
+        let errorMessage = 'Unable to get your location';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'Location access denied by user';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Location information is unavailable';
+            break;
+          case error.TIMEOUT:
+            errorMessage = 'Location request timed out';
+            break;
+        }
+        alert(errorMessage);
+        setGettingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000 // 5 minutes
+      }
+    );
   };
 
   return (
@@ -99,39 +110,41 @@ const SearchBar = ({ onSearch, userLocation, locationError }) => {
           />
         </div>
         <div className="form-group">
-          <button
-            type="button"
+          <button 
+            type="button" 
             onClick={handleUseCurrentLocation}
-            disabled={isGettingLocation}
             className="btn btn-secondary"
+            disabled={gettingLocation}
             style={{ marginBottom: '1rem' }}
           >
-            {isGettingLocation ? 'Getting Location...' : '📍 Use Current Location'}
+            {gettingLocation ? 'Getting Location...' : 'Use Current Location'}
           </button>
-          {locationError && (
-            <div className="error" style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>
-              {locationError}
-            </div>
-          )}
-          {locationSuccess && (
-            <div style={{ color: '#28a745', fontSize: '0.9rem', marginTop: '0.5rem' }}>
-              {locationSuccess}
-            </div>
-          )}
         </div>
         <div className="form-group">
-          <label htmlFor="distance" className="form-label">Search Radius (meters)</label>
-          <input
-            type="range"
-            id="distance"
-            className="form-input"
-            value={distance}
-            onChange={(e) => setDistance(e.target.value)}
-            min="1000"
-            max="50000"
-            step="1000"
-          />
-          <div>{distance} meters ({(distance / 1000).toFixed(1)} km)</div>
+          <label htmlFor="distance" className="form-label">Search Radius</label>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <input
+              type="number"
+              id="distance"
+              className="form-input"
+              value={distance}
+              onChange={(e) => setDistance(e.target.value)}
+              min="0.1"
+              step="0.1"
+              placeholder="e.g., 5"
+              required
+              style={{ flex: '2' }}
+            />
+            <select
+              value={distanceUnit}
+              onChange={(e) => setDistanceUnit(e.target.value)}
+              className="form-input"
+              style={{ flex: '1' }}
+            >
+              <option value="meters">meters</option>
+              <option value="km">km</option>
+            </select>
+          </div>
         </div>
         <button type="submit" className="btn btn-primary">
           Search Products

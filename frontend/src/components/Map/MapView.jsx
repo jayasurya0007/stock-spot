@@ -77,7 +77,6 @@ const MapView = () => {
     <div className="container">
       <h1>Merchant Map View</h1>
       <div className="map-container" style={{ height: 400, borderRadius: 12 }} ref={mapRef} />
-      <p style={{marginTop: 12}}>All shops are shown on the map. Click a marker for shop details and top products.</p>
     </div>
   );
 };

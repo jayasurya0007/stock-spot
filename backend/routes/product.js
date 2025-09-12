@@ -1,8 +1,10 @@
 //routes/product.js
 
 import express from 'express';
-import { addProduct, updateProduct, deleteProduct } from '../controllers/productController.js';
+import { addProduct, updateProduct, deleteProduct} from '../controllers/productController.js';
 import { authenticateToken, authorizeRoles } from '../middleware/auth.js';
+import * as productController from '../controllers/productController.js';
+console.log(productController);
 
 const router = express.Router();
 

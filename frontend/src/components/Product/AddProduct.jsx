@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { productService } from '../../services/products';
-import { useAuth } from '../../context/AuthContext';
+import { merchantService } from '../../services/merchants';
 
 const AddProduct = () => {
   const [formData, setFormData] = useState({
@@ -13,32 +13,23 @@ const AddProduct = () => {
     category: ''
   });
   const [merchants, setMerchants] = useState([]);
-  const { user } = useAuth();
-  const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user?.role === 'merchant') {
-      // Only allow adding products for the merchant's own shop
-      const params = new URLSearchParams(location.search);
-      const merchantIdFromQuery = params.get('merchant_id');
-      setFormData(f => ({ ...f, merchant_id: merchantIdFromQuery || '' }));
-    } else {
-      // For admin, fetch all merchants
-      const fetchMerchants = async () => {
-        try {
-          const data = await merchantService.getMerchants();
-          setMerchants(data);
-        } catch (err) {
-          setError('Failed to fetch merchants');
-        }
-      };
-      fetchMerchants();
-    }
-  }, [user, location.search]);
+    const fetchMerchants = async () => {
+      try {
+        const data = await merchantService.getMerchants();
+        setMerchants(data);
+      } catch (err) {
+        setError('Failed to fetch merchants');
+      }
+    };
+
+    fetchMerchants();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -72,40 +63,24 @@ const AddProduct = () => {
         <h2 className="form-title">Add New Product</h2>
         {error && <div className="error">{error}</div>}
         <form onSubmit={handleSubmit}>
-          {user?.role === 'merchant' ? (
-            <>
-              <input type="hidden" name="merchant_id" value={formData.merchant_id} />
-              <div className="form-group">
-                <label className="form-label">Merchant</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={formData.merchant_id}
-                  disabled
-                  readOnly
-                />
-              </div>
-            </>
-          ) : (
-            <div className="form-group">
-              <label htmlFor="merchant_id" className="form-label">Merchant</label>
-              <select
-                id="merchant_id"
-                name="merchant_id"
-                className="form-input"
-                value={formData.merchant_id}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select a merchant</option>
-                {merchants.map(merchant => (
-                  <option key={merchant.id} value={merchant.id}>
-                    {merchant.shop_name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          <div className="form-group">
+            <label htmlFor="merchant_id" className="form-label">Merchant</label>
+            <select
+              id="merchant_id"
+              name="merchant_id"
+              className="form-input"
+              value={formData.merchant_id}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select a merchant</option>
+              {merchants.map(merchant => (
+                <option key={merchant.id} value={merchant.id}>
+                  {merchant.shop_name}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="form-group">
             <label htmlFor="name" className="form-label">Product Name</label>
             <input

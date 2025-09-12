@@ -1,6 +1,11 @@
 import api from './api';
 
 export const productService = {
+  getMyProducts: async () => {
+    const response = await api.get('/product/my-products');
+    return response.data;
+  },
+
   addProduct: async (productData) => {
     const response = await api.post('/product/add', productData);
     return response.data;

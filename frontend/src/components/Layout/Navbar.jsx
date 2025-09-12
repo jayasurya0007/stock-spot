@@ -19,9 +19,9 @@ const Navbar = () => {
             <Link to="/" className="nav-link">StockSpot</Link>
           </div>
           <ul className="nav-menu">
-            {user && (
+            {user ? (
               <>
-                {/* Merchant dashboard link only for merchants */}
+                {/* Authenticated user menu */}
                 {user.role === 'merchant' && (
                   <li>
                     <Link to="/" className="nav-link">Dashboard</Link>
@@ -37,6 +37,19 @@ const Navbar = () => {
                   <button onClick={handleLogout} className="nav-link">
                     Logout
                   </button>
+                </li>
+              </>
+            ) : (
+              <>
+                {/* Unauthenticated user menu */}
+                <li>
+                  <Link to="/" className="nav-link">Explore</Link>
+                </li>
+                <li>
+                  <Link to="/login" className="nav-link">Login</Link>
+                </li>
+                <li>
+                  <Link to="/register" className="nav-link">Register</Link>
                 </li>
               </>
             )}

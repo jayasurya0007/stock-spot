@@ -1,3 +1,5 @@
+//src/routes.jsx
+
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
@@ -25,33 +27,53 @@ const ProtectedRoute = ({ children }) => {
 
 const AppRoutes = () => {
   const { user, isAuthenticated, loading } = useAuth();
+  
+  // Debug logging
+  console.log('AppRoutes - User:', user);
+  console.log('AppRoutes - isAuthenticated:', isAuthenticated);
+  console.log('AppRoutes - loading:', loading);
+  
   if (loading) return <div className="loading">Loading...</div>;
   return (
     <Routes>
-      {/* Public landing page: MapView before login */}
-      {!isAuthenticated && <>
-        <Route path="/" element={<MapView publicView={true} />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="*" element={<MapView publicView={true} />} />
-      </>}
-      {/* Authenticated routes */}
-      {isAuthenticated && <Route path="/" element={<Layout />}>
-        {/* Merchant dashboard and inventory management */}
-        {user?.role === 'merchant' ? <>
-          <Route index element={<MerchantDashboard />} />
-          <Route path="merchants/:id/products" element={<MerchantProducts />} />
-          <Route path="products/add" element={<AddProduct />} />
-          <Route path="products/edit/:id" element={<EditProduct />} />
-          <Route path="search" element={<SearchResults />} />
-          <Route path="map" element={<MapView />} />
-        </> : <>
-          {/* User dashboard: product search and map */}
-          <Route index element={<SearchResults />} />
-          <Route path="search" element={<SearchResults />} />
-          <Route path="map" element={<MapView />} />
+      {/* Always use Layout wrapper */}
+      <Route path="/" element={<Layout />}>
+        {/* Public routes for unauthenticated users */}
+        {!isAuthenticated && <>
+          <Route index element={<MapView publicView={true} />} />
+          <Route path="login" element={<Login />} />
+          <Route path="register" element={<Register />} />
+          <Route path="*" element={<MapView publicView={true} />} />
         </>}
-      </Route>}
+        {/* Authenticated routes */}
+        {isAuthenticated && <>
+          {/* Debug route */}
+          <Route path="debug" element={
+            <div style={{ padding: '2rem' }}>
+              <h2>Debug Info</h2>
+              <p><strong>User:</strong> {JSON.stringify(user)}</p>
+              <p><strong>Is Authenticated:</strong> {isAuthenticated.toString()}</p>
+              <p><strong>User Role:</strong> {user?.role || 'No role'}</p>
+            </div>
+          } />
+          
+          {/* Merchant dashboard and inventory management */}
+          {user?.role === 'merchant' ? (
+            <>
+              <Route index element={<MerchantDashboard />} />
+              <Route path="products" element={<MerchantProducts />} />
+              <Route path="products/add" element={<AddProduct />} />
+              <Route path="products/edit/:id" element={<EditProduct />} />
+            </>
+          ) : (
+            /* User dashboard: product search and map */
+            <Route index element={<SearchResults />} />
+          )}
+          <Route path="search" element={<SearchResults />} />
+          <Route path="map" element={<MapView />} />
+          <Route path="*" element={<div className="error">Page not found</div>} />
+        </>}
+      </Route>
     </Routes>
   );
 };
