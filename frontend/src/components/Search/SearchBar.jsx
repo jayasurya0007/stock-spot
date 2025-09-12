@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 
-const SearchBar = ({ onSearch }) => {
+const SearchBar = ({ onSearch, userLocation, locationError }) => {
   const [query, setQuery] = useState('');
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
   const [distance, setDistance] = useState(5000);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [locationSuccess, setLocationSuccess] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -20,6 +22,38 @@ const SearchBar = ({ onSearch }) => {
       lng: parseFloat(lng),
       distance: parseInt(distance)
     });
+  };
+
+  const handleUseCurrentLocation = () => {
+    setLocationSuccess('');
+    if (userLocation.lat && userLocation.lng) {
+      setLat(userLocation.lat.toString());
+      setLng(userLocation.lng.toString());
+      setLocationSuccess('✅ Location set successfully!');
+      setTimeout(() => setLocationSuccess(''), 3000);
+    } else {
+      setIsGettingLocation(true);
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            setLat(latitude.toString());
+            setLng(longitude.toString());
+            setIsGettingLocation(false);
+            setLocationSuccess('✅ Location set successfully!');
+            setTimeout(() => setLocationSuccess(''), 3000);
+          },
+          (error) => {
+            console.error('Error getting location:', error);
+            alert('Unable to get your current location. Please enter coordinates manually.');
+            setIsGettingLocation(false);
+          }
+        );
+      } else {
+        alert('Geolocation is not supported by this browser.');
+        setIsGettingLocation(false);
+      }
+    }
   };
 
   return (
@@ -63,6 +97,27 @@ const SearchBar = ({ onSearch }) => {
             placeholder="e.g., 80.2707"
             required
           />
+        </div>
+        <div className="form-group">
+          <button
+            type="button"
+            onClick={handleUseCurrentLocation}
+            disabled={isGettingLocation}
+            className="btn btn-secondary"
+            style={{ marginBottom: '1rem' }}
+          >
+            {isGettingLocation ? 'Getting Location...' : '📍 Use Current Location'}
+          </button>
+          {locationError && (
+            <div className="error" style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>
+              {locationError}
+            </div>
+          )}
+          {locationSuccess && (
+            <div style={{ color: '#28a745', fontSize: '0.9rem', marginTop: '0.5rem' }}>
+              {locationSuccess}
+            </div>
+          )}
         </div>
         <div className="form-group">
           <label htmlFor="distance" className="form-label">Search Radius (meters)</label>

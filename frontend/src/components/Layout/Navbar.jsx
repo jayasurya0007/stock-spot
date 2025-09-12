@@ -33,12 +33,6 @@ const Navbar = () => {
                 <li>
                   <Link to="/search" className="nav-link">Search</Link>
                 </li>
-                {/* Only merchant can add merchant */}
-                {user.role === 'merchant' && (
-                  <li>
-                    <Link to="/merchants/add" className="nav-link">Add Merchant</Link>
-                  </li>
-                )}
                 <li>
                   <button onClick={handleLogout} className="nav-link">
                     Logout

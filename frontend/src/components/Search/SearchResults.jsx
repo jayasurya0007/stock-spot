@@ -9,13 +9,20 @@ const SearchResults = () => {
   const [error, setError] = useState('');
   const [mapMerchant, setMapMerchant] = useState(null);
   const [userLocation, setUserLocation] = useState({ lat: null, lng: null });
+  const [locationError, setLocationError] = useState('');
 
   // Get user location for directions
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        (error) => {
+          console.error('Error getting location:', error);
+          setLocationError('Unable to get your location. Please enter coordinates manually.');
+        }
       );
+    } else {
+      setLocationError('Geolocation is not supported by this browser.');
     }
   }, []);
 
@@ -34,8 +41,12 @@ const SearchResults = () => {
 
   return (
     <div className="container">
-      <h1>Product Search</h1>
-      <SearchBar onSearch={handleSearch} />
+  <h1>Product Search</h1>
+      <SearchBar 
+        onSearch={handleSearch} 
+        userLocation={userLocation}
+        locationError={locationError}
+      />
       {loading && <div className="loading">Searching...</div>}
       {error && <div className="error">{error}</div>}
       {results.length > 0 && (
@@ -54,6 +65,7 @@ const SearchResults = () => {
               </button>
             </div>
           ))}
+          <p style={{marginTop: 12}}>Results are sorted by distance. Click 'View Merchant Location' to see the shop on the map and get directions.</p>
         </div>
       )}
       {/* Modal for Merchant Location using Leaflet */}

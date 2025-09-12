@@ -14,6 +14,16 @@ export const addProduct = async (req, res) => {
     const embedding = getEmbedding(name + " " + (description || ""));
     
     const conn = await pool.getConnection();
+    
+    // Ownership check: merchants can only add products to their own shop
+    if (req.user.role === 'merchant') {
+      const [merchants] = await conn.execute('SELECT id FROM merchants WHERE user_id = ?', [req.user.id]);
+      if (!merchants.length || merchants[0].id != merchant_id) {
+        conn.release();
+        return res.status(403).json({ error: 'You can only add products to your own shop' });
+      }
+    }
+    
     const [result] = await conn.execute(
       'INSERT INTO products (merchant_id, name, price, quantity, description, category, embedding) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [merchant_id, name, price, quantity, description || null, category || null, JSON.stringify(embedding)]
@@ -41,6 +51,21 @@ export const updateProduct = async (req, res) => {
 
   try {
     const conn = await pool.getConnection();
+    
+    // Ownership check: only allow if product belongs to merchant
+    if (req.user.role === 'merchant') {
+      const [rows] = await conn.execute('SELECT merchant_id FROM products WHERE id = ?', [product_id]);
+      if (!rows.length) {
+        conn.release();
+        return res.status(404).json({ error: 'Product not found' });
+      }
+      // Get merchant for this user
+      const [merchants] = await conn.execute('SELECT id FROM merchants WHERE user_id = ?', [req.user.id]);
+      if (!merchants.length || rows[0].merchant_id !== merchants[0].id) {
+        conn.release();
+        return res.status(403).json({ error: 'You do not have permission to update this product' });
+      }
+    }
     
     // Build dynamic update query based on provided fields
     let query = 'UPDATE products SET ';
@@ -87,6 +112,22 @@ export const deleteProduct = async (req, res) => {
 
   try {
     const conn = await pool.getConnection();
+    
+    // Ownership check: only allow if product belongs to merchant
+    if (req.user.role === 'merchant') {
+      const [rows] = await conn.execute('SELECT merchant_id FROM products WHERE id = ?', [product_id]);
+      if (!rows.length) {
+        conn.release();
+        return res.status(404).json({ error: 'Product not found' });
+      }
+      // Get merchant for this user
+      const [merchants] = await conn.execute('SELECT id FROM merchants WHERE user_id = ?', [req.user.id]);
+      if (!merchants.length || rows[0].merchant_id !== merchants[0].id) {
+        conn.release();
+        return res.status(403).json({ error: 'You do not have permission to delete this product' });
+      }
+    }
+    
     await conn.execute('DELETE FROM products WHERE id = ?', [product_id]);
     conn.release();
 

@@ -38,16 +38,19 @@ const AppRoutes = () => {
       {/* Authenticated routes */}
       {isAuthenticated && <Route path="/" element={<Layout />}>
         {/* Merchant dashboard and inventory management */}
-        {user?.role === 'merchant' && <>
+        {user?.role === 'merchant' ? <>
           <Route index element={<MerchantDashboard />} />
-          <Route path="products" element={<MerchantProducts />} />
+          <Route path="merchants/:id/products" element={<MerchantProducts />} />
           <Route path="products/add" element={<AddProduct />} />
           <Route path="products/edit/:id" element={<EditProduct />} />
+          <Route path="search" element={<SearchResults />} />
+          <Route path="map" element={<MapView />} />
+        </> : <>
+          {/* User dashboard: product search and map */}
+          <Route index element={<SearchResults />} />
+          <Route path="search" element={<SearchResults />} />
+          <Route path="map" element={<MapView />} />
         </>}
-        {/* User dashboard: product search and map */}
-        {user?.role !== 'merchant' && <Route index element={<SearchResults />} />}
-        <Route path="search" element={<SearchResults />} />
-        <Route path="map" element={<MapView />} />
       </Route>}
     </Routes>
   );
