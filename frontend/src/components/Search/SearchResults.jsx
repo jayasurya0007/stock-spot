@@ -7,6 +7,8 @@ import LeafletMap from '../Map/LeafletMap';
 const SearchResults = () => {
   const navigate = useNavigate();
   const [results, setResults] = useState([]);
+  const [exactMatches, setExactMatches] = useState([]);
+  const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [mapMerchant, setMapMerchant] = useState(null);
@@ -29,14 +31,22 @@ const SearchResults = () => {
       setLoading(true);
       setError('');
       setResults([]); // Clear previous results
+      setExactMatches([]);
+      setRelatedProducts([]);
       
       const data = await searchService.searchProducts(searchData);
       console.log('Search response:', data);
       
       const searchResults = data.results || [];
-      console.log('Processed results:', searchResults);
+      const exactResults = data.exactMatches || [];
+      const relatedResults = data.relatedProducts || [];
+      
+      console.log('Exact matches:', exactResults);
+      console.log('Related products:', relatedResults);
       
       setResults(searchResults);
+      setExactMatches(exactResults);
+      setRelatedProducts(relatedResults);
       setSearchType(data.searchType);
       setLastQuery(searchData.query);
       
@@ -116,58 +126,146 @@ const SearchResults = () => {
         </div>
       )}
       
-      {results.length > 0 && (
+      {(exactMatches.length > 0 || relatedProducts.length > 0) && (
         <>
           {/* Debug info */}
           <div style={{ padding: '10px', backgroundColor: '#e7f3ff', margin: '10px 0', borderRadius: '4px' }}>
-            <strong>Debug:</strong> Found {results.length} results. Names: {results.map(r => r.name).join(', ')}
+            <strong>Debug:</strong> Found {exactMatches.length} exact matches, {relatedProducts.length} related products
           </div>
           
           {/* Scrollable Results Container */}
           <div className="search-results-container" style={{ 
-            maxHeight: '60vh', 
+            maxHeight: '70vh', 
             overflowY: 'scroll',
             border: '2px solid #007bff',
             backgroundColor: '#ffffff'
           }}>
-            <h2 className="search-results-header">
-              🎉 Search Results ({results.length} found)
-            </h2>
             
-            {/* Simple list for testing */}
-            <div>
-              {results.map((product, index) => (
-                <div key={product.id || index} style={{
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  padding: '20px',
-                  margin: '10px 0',
-                  backgroundColor: '#f9f9f9',
-                  minHeight: '150px'
+            {/* Exact Matches Section */}
+            {exactMatches.length > 0 && (
+              <div style={{ marginBottom: '2rem' }}>
+                <h2 style={{ 
+                  color: '#2c3e50', 
+                  borderBottom: '3px solid #28a745', 
+                  paddingBottom: '8px',
+                  margin: '20px 0 15px 0',
+                  fontSize: '1.5rem'
                 }}>
-                  <h3 style={{ color: '#2c3e50', marginBottom: '12px' }}>
-                    {index + 1}. {product.name}
-                  </h3>
-                  <p><strong>Price:</strong> ${product.price}</p>
-                  <p><strong>Quantity:</strong> {product.quantity}</p>
-                  <p><strong>Merchant:</strong> {product.shop_name}</p>
-                  <p><strong>Distance:</strong> {(product.distance / 1000).toFixed(2)} km</p>
-                  <button 
-                    onClick={() => setMapMerchant(product)}
-                    style={{
-                      padding: '8px 16px',
-                      backgroundColor: '#28a745',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    📍 View Location
-                  </button>
-                </div>
-              ))}
-            </div>
+                  🎯 Exact Matches ({exactMatches.length})
+                </h2>
+                
+                {exactMatches.map((product, index) => (
+                  <div key={`exact-${product.id || index}`} style={{
+                    border: '2px solid #28a745',
+                    borderRadius: '8px',
+                    padding: '20px',
+                    margin: '15px 0',
+                    backgroundColor: '#f8fff9',
+                    minHeight: '150px',
+                    boxShadow: '0 2px 4px rgba(40, 167, 69, 0.1)'
+                  }}>
+                    <h3 style={{ color: '#2c3e50', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ 
+                        backgroundColor: '#28a745', 
+                        color: 'white', 
+                        borderRadius: '50%', 
+                        width: '24px', 
+                        height: '24px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        fontSize: '12px' 
+                      }}>
+                        {index + 1}
+                      </span>
+                      {product.name}
+                    </h3>
+                    <p><strong>Price:</strong> ${product.price}</p>
+                    <p><strong>Quantity:</strong> {product.quantity}</p>
+                    <p><strong>Merchant:</strong> {product.shop_name}</p>
+                    <p><strong>Distance:</strong> {(product.distance / 1000).toFixed(2)} km</p>
+                    {product.description && <p><strong>Description:</strong> {product.description}</p>}
+                    <button 
+                      onClick={() => setMapMerchant(product)}
+                      style={{
+                        padding: '10px 16px',
+                        backgroundColor: '#28a745',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      📍 View Location
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Related Products Section */}
+            {relatedProducts.length > 0 && (
+              <div>
+                <h2 style={{ 
+                  color: '#2c3e50', 
+                  borderBottom: '3px solid #17a2b8', 
+                  paddingBottom: '8px',
+                  margin: '20px 0 15px 0',
+                  fontSize: '1.3rem'
+                }}>
+                  🔍 Related Products ({relatedProducts.length})
+                </h2>
+                
+                {relatedProducts.map((product, index) => (
+                  <div key={`related-${product.id || index}`} style={{
+                    border: '1px solid #17a2b8',
+                    borderRadius: '8px',
+                    padding: '18px',
+                    margin: '12px 0',
+                    backgroundColor: '#f8fdff',
+                    minHeight: '140px',
+                    boxShadow: '0 1px 3px rgba(23, 162, 184, 0.1)'
+                  }}>
+                    <h3 style={{ color: '#2c3e50', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ 
+                        backgroundColor: '#17a2b8', 
+                        color: 'white', 
+                        borderRadius: '50%', 
+                        width: '22px', 
+                        height: '22px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        fontSize: '11px' 
+                      }}>
+                        {index + 1}
+                      </span>
+                      {product.name}
+                    </h3>
+                    <p><strong>Price:</strong> ${product.price}</p>
+                    <p><strong>Quantity:</strong> {product.quantity}</p>
+                    <p><strong>Merchant:</strong> {product.shop_name}</p>
+                    <p><strong>Distance:</strong> {(product.distance / 1000).toFixed(2)} km</p>
+                    <p><strong>Match:</strong> {(Math.max(0, (1 - product.similarity)) * 100).toFixed(1)}% similarity to your search</p>
+                    {product.description && <p><strong>Description:</strong> {product.description}</p>}
+                    <button 
+                      onClick={() => setMapMerchant(product)}
+                      style={{
+                        padding: '8px 14px',
+                        backgroundColor: '#17a2b8',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      📍 View Location
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             
             {/* Add some padding at the bottom */}
             <div style={{ height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>

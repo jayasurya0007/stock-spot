@@ -16,7 +16,50 @@ export const searchProducts = async (req, res) => {
     const embedding = getEmbedding(refinedQuery);
 
     const conn = await pool.getConnection();
-    const [rows] = await conn.execute(
+    
+    // First search: Exact name matches (highest priority)
+    const [exactMatches] = await conn.execute(
+      `SELECT
+         p.id,
+         p.name,
+         p.price,
+         p.quantity,
+         p.description,
+         m.id as merchant_id,
+         m.shop_name,
+         m.latitude,
+         m.longitude,
+         0 AS similarity,
+         (6371000 * ACOS(
+           COS(RADIANS(?)) * COS(RADIANS(m.latitude)) *
+           COS(RADIANS(?) - RADIANS(m.longitude)) +
+           SIN(RADIANS(?)) * SIN(RADIANS(m.latitude))
+         )) AS distance,
+         'exact' AS match_type
+       FROM products p
+       JOIN merchants m ON p.merchant_id = m.id
+       WHERE p.quantity > 0
+         AND LOWER(p.name) LIKE LOWER(?)
+         AND (6371000 * ACOS(
+           COS(RADIANS(?)) * COS(RADIANS(m.latitude)) *
+           COS(RADIANS(?) - RADIANS(m.longitude)) +
+           SIN(RADIANS(?)) * SIN(RADIANS(m.latitude))
+         )) <= ?
+       ORDER BY distance ASC
+       LIMIT 10;`,
+      [
+        lat, lng, lat,
+        `%${query}%`,
+        lat, lng, lat,
+        distance
+      ]
+    );
+
+    // Second search: Vector similarity for related products (excluding exact matches)
+    const exactMatchIds = exactMatches.map(row => row.id);
+    const excludeClause = exactMatchIds.length > 0 ? `AND p.id NOT IN (${exactMatchIds.map(() => '?').join(',')})` : '';
+    
+    const [similarProducts] = await conn.execute(
       `SELECT
          p.id,
          p.name,
@@ -32,7 +75,8 @@ export const searchProducts = async (req, res) => {
            COS(RADIANS(?)) * COS(RADIANS(m.latitude)) *
            COS(RADIANS(?) - RADIANS(m.longitude)) +
            SIN(RADIANS(?)) * SIN(RADIANS(m.latitude))
-         )) AS distance
+         )) AS distance,
+         'related' AS match_type
        FROM products p
        JOIN merchants m ON p.merchant_id = m.id
        WHERE p.quantity > 0
@@ -41,24 +85,39 @@ export const searchProducts = async (req, res) => {
            COS(RADIANS(?) - RADIANS(m.longitude)) +
            SIN(RADIANS(?)) * SIN(RADIANS(m.latitude))
          )) <= ?
+         ${excludeClause}
        ORDER BY similarity ASC
-       LIMIT 20;`,
-      [  
+       LIMIT 15;`,
+      [
         JSON.stringify(embedding),
         lat, lng, lat,
         lat, lng, lat,
-        distance
+        distance,
+        ...exactMatchIds
       ]
     );
+
     conn.release();
 
+    // Combine results with exact matches first
+    const exactResults = exactMatches.map(row => ({
+      ...row,
+      similarity: parseFloat(row.similarity),
+      distance: parseFloat(row.distance)
+    }));
+
+    const relatedResults = similarProducts.map(row => ({
+      ...row,
+      similarity: parseFloat(row.similarity),
+      distance: parseFloat(row.distance)
+    }));
+
     res.json({ 
-      refinedQuery, 
-      results: rows.map(row => ({
-        ...row,
-        similarity: parseFloat(row.similarity),
-        distance: parseFloat(row.distance)
-      }))
+      refinedQuery,
+      exactMatches: exactResults,
+      relatedProducts: relatedResults,
+      results: [...exactResults, ...relatedResults], // Combined for backward compatibility
+      searchType: exactResults.length > 0 ? 'exact_and_related' : 'related_only'
     });
   } catch (err) {
     console.error('Search failed:', err);
