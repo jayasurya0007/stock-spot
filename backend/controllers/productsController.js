@@ -12,11 +12,11 @@ const addProduct = async (req, res) => {
   try {
     const conn = await pool.getConnection();
     
-    // Get the merchant ID for the current user
+    // Get merchant for this user - merchants can only add products to their own shop
     const [merchants] = await conn.execute('SELECT id FROM merchants WHERE user_id = ?', [req.user.id]);
     if (!merchants.length) {
       conn.release();
-      return res.status(404).json({ error: 'Merchant account not found for this user' });
+      return res.status(404).json({ error: 'Merchant not found for this user' });
     }
     
     const merchantId = merchants[0].id;
@@ -124,35 +124,11 @@ const getMyProducts = async (req, res) => {
   try {
     const conn = await pool.getConnection();
     
-    // Debug: Log user info
-    console.log('getMyProducts - User ID:', req.user.id);
-    console.log('getMyProducts - User role:', req.user.role);
-    
     // Get merchant for this user
-    let [merchants] = await conn.execute('SELECT id FROM merchants WHERE user_id = ?', [req.user.id]);
-    console.log('getMyProducts - Found merchants:', merchants);
-    
-    // If no merchant record exists, create one for this user
-    if (!merchants.length) {
-      console.log('Creating merchant record for user:', req.user.id);
-      const [result] = await conn.execute(
-        'INSERT INTO merchants (user_id, shop_name, address, latitude, longitude) VALUES (?, ?, ?, ?, ?)',
-        [req.user.id, 'My Shop', 'Default Address', 0, 0]
-      );
-      
-      // Get the newly created merchant
-      [merchants] = await conn.execute('SELECT id FROM merchants WHERE user_id = ?', [req.user.id]);
-    }
-    
+    const [merchants] = await conn.execute('SELECT id FROM merchants WHERE user_id = ?', [req.user.id]);
     if (!merchants.length) {
       conn.release();
-      return res.status(404).json({ 
-        error: 'Failed to create or find merchant record',
-        debug: {
-          userId: req.user.id,
-          userRole: req.user.role
-        }
-      });
+      return res.status(404).json({ error: 'Merchant not found for this user' });
     }
     
     const merchantId = merchants[0].id;
@@ -210,17 +186,31 @@ const getProduct = async (req, res) => {
 
   try {
     const conn = await pool.getConnection();
+    
+    // First check if product exists and get its merchant_id
     const [products] = await conn.execute(
-      'SELECT p.*, m.business_name as merchant_name FROM products p JOIN merchants m ON p.merchant_id = m.id WHERE p.id = ?',
+      'SELECT p.*, m.shop_name as merchant_name FROM products p JOIN merchants m ON p.merchant_id = m.id WHERE p.id = ?',
       [product_id]
     );
-    conn.release();
 
     if (!products.length) {
+      conn.release();
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    res.json({ product: products[0] });
+    const product = products[0];
+
+    // For merchants, ensure they can only access their own products
+    if (req.user.role === 'merchant') {
+      const [merchants] = await conn.execute('SELECT id FROM merchants WHERE user_id = ?', [req.user.id]);
+      if (!merchants.length || product.merchant_id !== merchants[0].id) {
+        conn.release();
+        return res.status(403).json({ error: 'You do not have permission to view this product' });
+      }
+    }
+
+    conn.release();
+    res.json({ product });
   } catch (err) {
     console.error('Failed to fetch product:', err);
     res.status(500).json({ error: 'Failed to fetch product', details: err.message });

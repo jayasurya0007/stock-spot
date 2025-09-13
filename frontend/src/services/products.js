@@ -6,6 +6,11 @@ export const productService = {
     return response.data;
   },
 
+  getProduct: async (productId) => {
+    const response = await api.get(`/product/${productId}`);
+    return response.data;
+  },
+
   addProduct: async (productData) => {
     const response = await api.post('/product/add', productData);
     return response.data;

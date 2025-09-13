@@ -16,13 +16,13 @@ export const merchantService = {
     return response.data;
   },
 
-  getMerchantInfo: async () => {
-    const response = await api.get('/merchant/my-info');
+  getMyMerchantDetails: async () => {
+    const response = await api.get('/merchant/my-details');
     return response.data;
   },
 
-  updateMerchantLocation: async (locationData) => {
-    const response = await api.put('/merchant/update-location', locationData);
+  updateMerchantDetails: async (merchantData) => {
+    const response = await api.put('/merchant/my-details', merchantData);
     return response.data;
   },
 

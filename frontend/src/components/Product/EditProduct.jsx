@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { productService } from '../../services/products';
+import { useAuth } from '../../context/AuthContext';
 
 const EditProduct = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -13,21 +15,14 @@ const EditProduct = () => {
     category: ''
   });
   const [loading, setLoading] = useState(true);
+  const [submitLoading, setSubmitLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        // We'll need to add a getProduct method to productService or use a direct API call
-        // For now, let's get the product from the user's products list
-        const data = await productService.getMyProducts();
-        const product = data.products.find(p => p.id.toString() === id);
-        
-        if (!product) {
-          setError('Product not found or you do not have permission to edit it');
-          return;
-        }
-        
+        const data = await productService.getProduct(id);
+        const product = data.product;
         setFormData({
           name: product.name || '',
           price: product.price || '',
@@ -36,13 +31,19 @@ const EditProduct = () => {
           category: product.category || ''
         });
       } catch (err) {
-        setError('Failed to fetch product');
+        setError(err.response?.data?.error || 'Failed to fetch product details');
       } finally {
         setLoading(false);
       }
     };
-    fetchProduct();
-  }, [id]);
+
+    if (user?.role === 'merchant') {
+      fetchProduct();
+    } else {
+      setError('Access denied. Only merchants can edit products.');
+      setLoading(false);
+    }
+  }, [id, user]);
 
   const handleChange = (e) => {
     setFormData({
@@ -53,15 +54,21 @@ const EditProduct = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!formData.name || !formData.price || !formData.quantity) {
+      return setError('Please fill in all required fields');
+    }
+    
     try {
       setError('');
-      setLoading(true);
+      setSubmitLoading(true);
       await productService.updateProduct(id, formData);
-      navigate('/'); // Navigate back to merchant dashboard
+      navigate('/products'); // Navigate back to products list
     } catch (err) {
-      setError('Failed to update product');
+      setError(err.response?.data?.error || 'Failed to update product');
+    } finally {
+      setSubmitLoading(false);
     }
-    setLoading(false);
   };
 
   if (loading) return <div className="loading">Loading...</div>;
@@ -71,6 +78,7 @@ const EditProduct = () => {
     <div className="container">
       <div className="form-container">
         <h2 className="form-title">Edit Product</h2>
+        {error && <div className="error">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="name" className="form-label">Product Name</label>
@@ -133,13 +141,23 @@ const EditProduct = () => {
               onChange={handleChange}
             />
           </div>
-          <button 
-            type="submit" 
-            className="btn btn-primary btn-block"
-            disabled={loading}
-          >
-            {loading ? 'Updating Product...' : 'Update Product'}
-          </button>
+          <div className="form-actions">
+            <button
+              type="button"
+              onClick={() => navigate('/products')}
+              className="btn btn-secondary"
+              disabled={submitLoading}
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              className="btn btn-primary"
+              disabled={submitLoading}
+            >
+              {submitLoading ? 'Updating Product...' : 'Update Product'}
+            </button>
+          </div>
         </form>
       </div>
     </div>

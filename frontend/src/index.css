@@ -134,8 +134,38 @@ body {
   background-color: #2980b9;
 }
 
+.btn-secondary {
+  background-color: #95a5a6;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #7f8c8d;
+}
+
+.btn-danger {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #c0392b;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .btn-block {
   width: 100%;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
 }
 
 /* Cards */
@@ -164,6 +194,20 @@ body {
   background-color: #fadbd8;
   border-radius: 4px;
   margin-bottom: 1rem;
+}
+
+.success {
+  color: #27ae60;
+  padding: 1rem;
+  background-color: #d5f3e0;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+/* Animations */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* Map */

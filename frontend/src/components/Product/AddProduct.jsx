@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { productService } from '../../services/products';
+import { useAuth } from '../../context/AuthContext';
 
 const AddProduct = () => {
   const [formData, setFormData] = useState({
@@ -14,6 +15,7 @@ const AddProduct = () => {
   const [error, setError] = useState('');
   
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleChange = (e) => {
     setFormData({
@@ -33,7 +35,7 @@ const AddProduct = () => {
       setError('');
       setLoading(true);
       await productService.addProduct(formData);
-      navigate('/'); // Navigate back to merchant dashboard
+      navigate('/products'); // Navigate back to products list
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to add product');
     }

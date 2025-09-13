@@ -20,41 +20,121 @@ const SearchResults = () => {
   }, []);
 
   const handleSearch = async (searchData) => {
+    console.log('Search initiated with data:', searchData);
     try {
       setLoading(true);
       setError('');
+      setResults([]); // Clear previous results
+      
       const data = await searchService.searchProducts(searchData);
-      setResults(data.results || []);
+      console.log('Search response:', data);
+      
+      const searchResults = data.results || [];
+      console.log('Processed results:', searchResults);
+      
+      setResults(searchResults);
+      
+      if (searchResults.length === 0) {
+        setError('No products found matching your search criteria. Try expanding your search radius or using different keywords.');
+      }
     } catch (err) {
-      setError(err.response?.data?.error || 'Search failed');
+      console.error('Search error:', err);
+      const errorMessage = err.response?.data?.error || err.message || 'Search failed';
+      setError(`Search failed: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="container">
+    <div className="container" style={{ 
+      minHeight: '100vh',
+      height: 'auto',
+      padding: '20px',
+      backgroundColor: '#ffffff',
+      position: 'relative',
+      overflow: 'visible'
+    }}>
       <h1>Product Search</h1>
       <SearchBar onSearch={handleSearch} />
       {loading && <div className="loading">Searching...</div>}
       {error && <div className="error">{error}</div>}
-      {results.length > 0 && (
-        <div>
-          <h2>Search Results</h2>
-          {results.map(product => (
-            <div key={product.id} className="card">
-              <h3>{product.name}</h3>
-              <p>{product.description}</p>
-              <p><strong>Price:</strong> ${product.price}</p>
-              <p><strong>Quantity:</strong> {product.quantity}</p>
-              <p><strong>Merchant:</strong> {product.shop_name}</p>
-              <p><strong>Distance:</strong> {(product.distance / 1000).toFixed(2)} km</p>
-              <button className="btn btn-secondary" onClick={() => setMapMerchant(product)}>
-                View Merchant Location
-              </button>
-            </div>
-          ))}
+      
+      {!loading && !error && results.length === 0 && (
+        <div className="card" style={{ marginTop: '2rem', textAlign: 'center' }}>
+          <h3>Welcome to Product Search!</h3>
+          <p>Enter a product name, set your location, and click "Search Products" to find items near you.</p>
+          <div style={{ marginTop: '1rem' }}>
+            <h4>Search Tips:</h4>
+            <ul style={{ textAlign: 'left', display: 'inline-block' }}>
+              <li>Try searching for common items like "rice", "bread", or "milk"</li>
+              <li>Use the "Use Current Location" button for accurate results</li>
+              <li>Increase the search radius if no results are found</li>
+              <li>Check that there are merchants with products in your area</li>
+            </ul>
+          </div>
         </div>
+      )}
+      
+      {results.length > 0 && (
+        <>
+          {/* Debug info */}
+          <div style={{ padding: '10px', backgroundColor: '#e7f3ff', margin: '10px 0', borderRadius: '4px' }}>
+            <strong>Debug:</strong> Found {results.length} results. Names: {results.map(r => r.name).join(', ')}
+          </div>
+          
+          {/* Scrollable Results Container */}
+          <div className="search-results-container" style={{ 
+            maxHeight: '60vh', 
+            overflowY: 'scroll',
+            border: '2px solid #007bff',
+            backgroundColor: '#ffffff'
+          }}>
+            <h2 className="search-results-header">
+              🎉 Search Results ({results.length} found)
+            </h2>
+            
+            {/* Simple list for testing */}
+            <div>
+              {results.map((product, index) => (
+                <div key={product.id || index} style={{
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  padding: '20px',
+                  margin: '10px 0',
+                  backgroundColor: '#f9f9f9',
+                  minHeight: '150px'
+                }}>
+                  <h3 style={{ color: '#2c3e50', marginBottom: '12px' }}>
+                    {index + 1}. {product.name}
+                  </h3>
+                  <p><strong>Price:</strong> ${product.price}</p>
+                  <p><strong>Quantity:</strong> {product.quantity}</p>
+                  <p><strong>Merchant:</strong> {product.shop_name}</p>
+                  <p><strong>Distance:</strong> {(product.distance / 1000).toFixed(2)} km</p>
+                  <button 
+                    onClick={() => setMapMerchant(product)}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: '#28a745',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    📍 View Location
+                  </button>
+                </div>
+              ))}
+            </div>
+            
+            {/* Add some padding at the bottom */}
+            <div style={{ height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
+              ⬆️ Scroll up to see more results
+            </div>
+          </div>
+        </>
       )}
       {/* Modal for Merchant Location using Leaflet */}
       {mapMerchant && (
