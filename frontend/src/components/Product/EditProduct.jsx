@@ -1,34 +1,34 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { productService } from '../../services/products';
-import { merchantService } from '../../services/merchants';
 
 const EditProduct = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    merchant_id: '',
     name: '',
     price: '',
     quantity: '',
     description: '',
     category: ''
   });
-  const [merchants, setMerchants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchProduct = async () => {
       try {
-        const merchantList = await merchantService.getMerchants();
-        setMerchants(merchantList);
-        // Fetch product details
-        const res = await fetch(`/api/product/${id}`);
-        if (!res.ok) throw new Error('Failed to fetch product');
-        const product = await res.json();
+        // We'll need to add a getProduct method to productService or use a direct API call
+        // For now, let's get the product from the user's products list
+        const data = await productService.getMyProducts();
+        const product = data.products.find(p => p.id.toString() === id);
+        
+        if (!product) {
+          setError('Product not found or you do not have permission to edit it');
+          return;
+        }
+        
         setFormData({
-          merchant_id: product.merchant_id || '',
           name: product.name || '',
           price: product.price || '',
           quantity: product.quantity || '',
@@ -36,12 +36,12 @@ const EditProduct = () => {
           category: product.category || ''
         });
       } catch (err) {
-        setError('Failed to fetch product or merchants');
+        setError('Failed to fetch product');
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
+    fetchProduct();
   }, [id]);
 
   const handleChange = (e) => {
@@ -57,7 +57,7 @@ const EditProduct = () => {
       setError('');
       setLoading(true);
       await productService.updateProduct(id, formData);
-      navigate(`/merchants/${formData.merchant_id}/products`);
+      navigate('/'); // Navigate back to merchant dashboard
     } catch (err) {
       setError('Failed to update product');
     }
@@ -72,24 +72,6 @@ const EditProduct = () => {
       <div className="form-container">
         <h2 className="form-title">Edit Product</h2>
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="merchant_id" className="form-label">Merchant</label>
-            <select
-              id="merchant_id"
-              name="merchant_id"
-              className="form-input"
-              value={formData.merchant_id}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select a merchant</option>
-              {merchants.map(merchant => (
-                <option key={merchant.id} value={merchant.id}>
-                  {merchant.shop_name}
-                </option>
-              ))}
-            </select>
-          </div>
           <div className="form-group">
             <label htmlFor="name" className="form-label">Product Name</label>
             <input

@@ -7,12 +7,22 @@ export const merchantService = {
   },
 
   addMerchant: async (merchantData) => {
-    const response = await api.post('/merchants/add', merchantData);
+    const response = await api.post('/merchant/add', merchantData);
     return response.data;
   },
 
   getMerchantProducts: async (merchantId) => {
     const response = await api.get(`/merchant/${merchantId}/products`);
+    return response.data;
+  },
+
+  getMerchantInfo: async () => {
+    const response = await api.get('/merchant/my-info');
+    return response.data;
+  },
+
+  updateMerchantLocation: async (locationData) => {
+    const response = await api.put('/merchant/update-location', locationData);
     return response.data;
   },
 

@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { merchantService } from '../../services/merchants';
+import { Link } from 'react-router-dom';
+import { productService } from '../../services/products';
 
 const MerchantProducts = () => {
-  const { id } = useParams();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -11,8 +10,8 @@ const MerchantProducts = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const data = await merchantService.getMerchantProducts(id);
-        setProducts(data.products || data); // support both array and {products: []}
+        const data = await productService.getMyProducts();
+        setProducts(data.products || []);
       } catch (err) {
         setError('Failed to fetch products');
       } finally {
@@ -20,16 +19,16 @@ const MerchantProducts = () => {
       }
     };
     fetchProducts();
-  }, [id]);
+  }, []);
 
   if (loading) return <div className="loading">Loading...</div>;
   if (error) return <div className="error">{error}</div>;
 
   return (
     <div className="container">
-      <h2>Products for Merchant</h2>
+      <h2>My Products</h2>
       {products.length === 0 ? (
-        <p>No products found for this merchant.</p>
+        <p>No products found. Start by adding your first product!</p>
       ) : (
         <div>
           {products.map(product => (

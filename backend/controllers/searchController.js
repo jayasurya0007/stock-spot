@@ -43,7 +43,7 @@ export const searchProducts = async (req, res) => {
          )) <= ?
        ORDER BY similarity ASC
        LIMIT 20;`,
-      [
+      [  
         JSON.stringify(embedding),
         lat, lng, lat,
         lat, lng, lat,

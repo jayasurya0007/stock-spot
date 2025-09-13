@@ -23,9 +23,14 @@ const Navbar = () => {
               <>
                 {/* Authenticated user menu */}
                 {user.role === 'merchant' && (
-                  <li>
-                    <Link to="/" className="nav-link">Dashboard</Link>
-                  </li>
+                  <>
+                    <li>
+                      <Link to="/" className="nav-link">Dashboard</Link>
+                    </li>
+                    <li>
+                      <Link to="/shop-location" className="nav-link">Shop Location</Link>
+                    </li>
+                  </>
                 )}
                 <li>
                   <Link to="/map" className="nav-link">Map View</Link>

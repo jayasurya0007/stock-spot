@@ -1,35 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { productService } from '../../services/products';
-import { merchantService } from '../../services/merchants';
 
 const AddProduct = () => {
   const [formData, setFormData] = useState({
-    merchant_id: '',
     name: '',
     price: '',
     quantity: '',
     description: '',
     category: ''
   });
-  const [merchants, setMerchants] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchMerchants = async () => {
-      try {
-        const data = await merchantService.getMerchants();
-        setMerchants(data);
-      } catch (err) {
-        setError('Failed to fetch merchants');
-      }
-    };
-
-    fetchMerchants();
-  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -41,7 +25,7 @@ const AddProduct = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.merchant_id || !formData.name || !formData.price || !formData.quantity) {
+    if (!formData.name || !formData.price || !formData.quantity) {
       return setError('Please fill in all required fields');
     }
     
@@ -49,7 +33,7 @@ const AddProduct = () => {
       setError('');
       setLoading(true);
       await productService.addProduct(formData);
-      navigate(`/merchants/${formData.merchant_id}/products`);
+      navigate('/'); // Navigate back to merchant dashboard
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to add product');
     }
@@ -63,24 +47,6 @@ const AddProduct = () => {
         <h2 className="form-title">Add New Product</h2>
         {error && <div className="error">{error}</div>}
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="merchant_id" className="form-label">Merchant</label>
-            <select
-              id="merchant_id"
-              name="merchant_id"
-              className="form-input"
-              value={formData.merchant_id}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select a merchant</option>
-              {merchants.map(merchant => (
-                <option key={merchant.id} value={merchant.id}>
-                  {merchant.shop_name}
-                </option>
-              ))}
-            </select>
-          </div>
           <div className="form-group">
             <label htmlFor="name" className="form-label">Product Name</label>
             <input
