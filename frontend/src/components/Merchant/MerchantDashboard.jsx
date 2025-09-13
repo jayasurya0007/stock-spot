@@ -59,6 +59,13 @@ const MerchantDashboard = () => {
     );
   }
 
+  // Check if current user owns the product
+  const canEditProduct = (product) => {
+    // Since this is MerchantDashboard and uses getMyProducts(), 
+    // all products should belong to the current merchant
+    return user?.role === 'merchant' && (product.merchant_id === user.id || !product.merchant_id);
+  };
+
   return (
     <div className="container">
       <h1>My Inventory</h1>
@@ -108,23 +115,27 @@ const MerchantDashboard = () => {
                       </span>
                     </td>
                     <td style={{ padding: '12px', textAlign: 'center' }}>
-                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                        <Link 
-                          to={`/products/edit/${product.id}`}
-                          className="btn btn-secondary"
-                          style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
-                        >
-                          Edit
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(product.id, product.name)}
-                          className="btn btn-danger"
-                          disabled={deleteLoading[product.id]}
-                          style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
-                        >
-                          {deleteLoading[product.id] ? 'Deleting...' : 'Delete'}
-                        </button>
-                      </div>
+                      {canEditProduct(product) ? (
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                          <Link 
+                            to={`/products/edit/${product.id}`}
+                            className="btn btn-secondary"
+                            style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
+                          >
+                            Edit
+                          </Link>
+                          <button
+                            onClick={() => handleDelete(product.id, product.name)}
+                            className="btn btn-danger"
+                            disabled={deleteLoading[product.id]}
+                            style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
+                          >
+                            {deleteLoading[product.id] ? 'Deleting...' : 'Delete'}
+                          </button>
+                        </div>
+                      ) : (
+                        <span style={{ color: '#666', fontSize: '0.8rem' }}>View Only</span>
+                      )}
                     </td>
                   </tr>
                 ))}

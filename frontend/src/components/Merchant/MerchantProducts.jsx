@@ -40,6 +40,19 @@ const MerchantProducts = () => {
   if (loading) return <div className="loading">Loading...</div>;
   if (error) return <div className="error">{error}</div>;
 
+  // Check if current user owns the product
+  const canEditProduct = (product) => {
+    // If viewing own products (no ID), user can edit
+    if (!id && user?.role === 'merchant') return true;
+    
+    // If viewing another merchant's products, check if current user is the owner
+    if (id && user?.role === 'merchant') {
+      return user.id === product.merchant_id || user.id === parseInt(id);
+    }
+    
+    return false;
+  };
+
   return (
     <div className="container">
       <h2>{id ? 'Products for Merchant' : 'My Products'}</h2>
@@ -53,7 +66,9 @@ const MerchantProducts = () => {
               <p>{product.description}</p>
               <p><strong>Price:</strong> ${product.price}</p>
               <p><strong>Quantity:</strong> {product.quantity}</p>
-              <Link to={`/products/edit/${product.id || product._id}`}>Edit</Link>
+              {canEditProduct(product) && (
+                <Link to={`/products/edit/${product.id || product._id}`}>Edit</Link>
+              )}
             </div>
           ))}
         </div>

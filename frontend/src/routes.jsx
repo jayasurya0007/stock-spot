@@ -73,6 +73,7 @@ const AppRoutes = () => {
           )}
           <Route path="search" element={<SearchResults />} />
           <Route path="map" element={<MapView />} />
+          <Route path="merchant/:id/products" element={<MerchantProducts />} />
           <Route path="*" element={<div className="error">Page not found</div>} />
         </>}
       </Route>
