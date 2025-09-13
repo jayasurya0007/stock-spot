@@ -14,6 +14,7 @@ import UpdateShopDetails from './components/Merchant/UpdateShopDetails';
 import AddProduct from './components/Product/AddProduct';
 import EditProduct from './components/Product/EditProduct';
 import SearchResults from './components/Search/SearchResults';
+import CitySearch from './components/Search/CitySearch';
 import MapView from './components/Map/MapView';
 
 const ProtectedRoute = ({ children }) => {
@@ -44,6 +45,7 @@ const AppRoutes = () => {
           <Route index element={<MapView publicView={true} />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
+          <Route path="city-search" element={<CitySearch />} />
           <Route path="*" element={<MapView publicView={true} />} />
         </>}
         {/* Authenticated routes */}
@@ -72,6 +74,7 @@ const AppRoutes = () => {
             <Route index element={<SearchResults />} />
           )}
           <Route path="search" element={<SearchResults />} />
+          <Route path="city-search" element={<CitySearch />} />
           <Route path="map" element={<MapView />} />
           <Route path="merchant/:id/products" element={<MerchantProducts />} />
           <Route path="*" element={<div className="error">Page not found</div>} />

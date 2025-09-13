@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import SearchBar from './SearchBar';
 import { searchService } from '../../services/search';
 import LeafletMap from '../Map/LeafletMap';
 
 const SearchResults = () => {
+  const navigate = useNavigate();
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [mapMerchant, setMapMerchant] = useState(null);
   const [userLocation, setUserLocation] = useState({ lat: null, lng: null });
+  const [searchType, setSearchType] = useState(null);
+  const [lastQuery, setLastQuery] = useState('');
 
   // Get user location for directions
   useEffect(() => {
@@ -33,9 +37,16 @@ const SearchResults = () => {
       console.log('Processed results:', searchResults);
       
       setResults(searchResults);
+      setSearchType(data.searchType);
+      setLastQuery(searchData.query);
       
       if (searchResults.length === 0) {
-        setError('No products found matching your search criteria. Try expanding your search radius or using different keywords.');
+        const searchType = data.searchType || 'unknown';
+        if (searchType === 'location_only') {
+          setError('No products found within the specified radius. Try expanding your search radius or check if there are any merchants in your area.');
+        } else {
+          setError('No products found matching your search criteria. Try expanding your search radius, using different keywords, or browse all products by leaving the search query empty.');
+        }
       }
     } catch (err) {
       console.error('Search error:', err);
@@ -56,7 +67,36 @@ const SearchResults = () => {
       overflow: 'visible'
     }}>
       <h1>Product Search</h1>
+      
+      {/* Alternative Search Options */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        marginTop: '1rem', 
+        marginBottom: '1.5rem' 
+      }}>
+        <button 
+          onClick={() => navigate('/city-search')}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: '#17a2b8',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          🏙️ Search using the city
+        </button>
+      </div>
+      
       <SearchBar onSearch={handleSearch} />
+      
       {loading && <div className="loading">Searching...</div>}
       {error && <div className="error">{error}</div>}
       

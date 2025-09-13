@@ -106,3 +106,112 @@ export const getMapData = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch map data', details: err.message });
   }
 };
+
+export const searchMerchantsByCity = async (req, res) => {
+  const { cityName } = req.body;
+
+  if (!cityName) {
+    return res.status(400).json({ error: 'City name is required' });
+  }
+
+  try {
+    const conn = await pool.getConnection();
+    
+    // Search for merchants by city name in address field
+    const [merchants] = await conn.execute(`
+      SELECT 
+        m.id, 
+        m.shop_name, 
+        m.address,
+        m.latitude, 
+        m.longitude,
+        m.owner_name,
+        m.phone,
+        COUNT(p.id) as product_count
+      FROM merchants m
+      LEFT JOIN products p ON m.id = p.merchant_id AND p.quantity > 0
+      WHERE m.address LIKE ? OR m.address LIKE ?
+      GROUP BY m.id
+      ORDER BY m.shop_name
+    `, [`%${cityName}%`, `%${cityName.toLowerCase()}%`]);
+    
+    conn.release();
+    res.json({ merchants });
+  } catch (err) {
+    console.error('City search failed:', err);
+    res.status(500).json({ error: 'City search failed', details: err.message });
+  }
+};
+
+export const searchMerchantsByLocation = async (req, res) => {
+  const { lat, lng, distance = 10000 } = req.body; // Default 10km radius
+
+  if (!lat || !lng) {
+    return res.status(400).json({ error: 'Latitude and longitude are required' });
+  }
+
+  try {
+    const conn = await pool.getConnection();
+    
+    // Search for merchants within specified distance from location
+    const [merchants] = await conn.execute(`
+      SELECT 
+        m.id, 
+        m.shop_name, 
+        m.address,
+        m.latitude, 
+        m.longitude,
+        m.owner_name,
+        m.phone,
+        COUNT(p.id) as product_count,
+        (6371000 * ACOS(
+          COS(RADIANS(?)) * COS(RADIANS(m.latitude)) *
+          COS(RADIANS(?) - RADIANS(m.longitude)) +
+          SIN(RADIANS(?)) * SIN(RADIANS(m.latitude))
+        )) AS distance
+      FROM merchants m
+      LEFT JOIN products p ON m.id = p.merchant_id AND p.quantity > 0
+      WHERE (6371000 * ACOS(
+        COS(RADIANS(?)) * COS(RADIANS(m.latitude)) *
+        COS(RADIANS(?) - RADIANS(m.longitude)) +
+        SIN(RADIANS(?)) * SIN(RADIANS(m.latitude))
+      )) <= ?
+      GROUP BY m.id
+      ORDER BY distance ASC
+    `, [lat, lng, lat, lat, lng, lat, distance]);
+    
+    conn.release();
+    res.json({ 
+      merchants: merchants.map(merchant => ({
+        ...merchant,
+        distance: parseFloat(merchant.distance)
+      }))
+    });
+  } catch (err) {
+    console.error('Location search failed:', err);
+    res.status(500).json({ error: 'Location search failed', details: err.message });
+  }
+};
+
+export const getMerchantProducts = async (req, res) => {
+  const { merchantId } = req.params;
+
+  if (!merchantId) {
+    return res.status(400).json({ error: 'Merchant ID is required' });
+  }
+
+  try {
+    const conn = await pool.getConnection();
+    
+    const [products] = await conn.execute(
+      'SELECT id, name, description, price, quantity, category FROM products WHERE merchant_id = ? AND quantity > 0 ORDER BY name',
+      [merchantId]
+    );
+    
+    conn.release();
+    res.json({ products });
+  } catch (err) {
+    console.error('Failed to fetch merchant products:', err);
+    res.status(500).json({ error: 'Failed to fetch merchant products', details: err.message });
+  }
+};
