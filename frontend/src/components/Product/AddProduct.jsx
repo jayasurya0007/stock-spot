@@ -35,7 +35,7 @@ const AddProduct = () => {
       setError('');
       setLoading(true);
       await productService.addProduct(formData);
-      navigate('/products'); // Navigate back to products list
+      navigate('/'); // Navigate back to dashboard
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to add product');
     }

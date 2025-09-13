@@ -63,12 +63,9 @@ const MerchantDashboard = () => {
     <div className="container">
       <h1>My Inventory</h1>
       
-      <div style={{ marginBottom: '2rem', display: 'flex', gap: '1rem' }}>
+      <div style={{ marginBottom: '2rem' }}>
         <Link to="/products/add" className="btn btn-primary">
           Add New Product
-        </Link>
-        <Link to="/shop/update" className="btn btn-secondary">
-          Update Shop Details
         </Link>
       </div>
 

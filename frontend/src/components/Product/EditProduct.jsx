@@ -63,7 +63,7 @@ const EditProduct = () => {
       setError('');
       setSubmitLoading(true);
       await productService.updateProduct(id, formData);
-      navigate('/products'); // Navigate back to products list
+      navigate('/'); // Navigate back to dashboard
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to update product');
     } finally {
@@ -144,7 +144,7 @@ const EditProduct = () => {
           <div className="form-actions">
             <button
               type="button"
-              onClick={() => navigate('/products')}
+              onClick={() => navigate('/')}
               className="btn btn-secondary"
               disabled={submitLoading}
             >
