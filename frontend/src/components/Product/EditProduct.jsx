@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { productService } from '../../services/products';
 import { useAuth } from '../../context/AuthContext';
 import { LoadingSpinner, SkeletonLoader } from '../Loading';
+import { Sparkles, ArrowLeft } from 'lucide-react';
 
 const EditProduct = () => {
   const { id } = useParams();
@@ -37,7 +38,8 @@ const EditProduct = () => {
           price: product.price || '',
           quantity: product.quantity || '',
           description: product.description || '',
-          category: product.category || ''
+          category: product.category || '',
+          enhanceDescription: false
         });
       } catch (err) {
         setError(err.response?.data?.error || 'Failed to fetch product details');
@@ -61,7 +63,6 @@ const EditProduct = () => {
       [name]: type === 'checkbox' ? checked : value
     });
     
-    // Reset preview when form data changes
     if (['name', 'price', 'category'].includes(name)) {
       setShowPreview(false);
       setEnhancedDescription('');
@@ -92,7 +93,6 @@ const EditProduct = () => {
       setShowPreview(true);
       setDescriptionSource('enhanced');
       
-      // Auto-select suggested category if one was generated
       if (preview.categoryGenerated && preview.suggestedCategory) {
         setCategorySource('suggested');
       }
@@ -128,7 +128,6 @@ const EditProduct = () => {
       setError('');
       setSubmitLoading(true);
       
-      // Use enhanced description and suggested category if selected
       const finalDescription = descriptionSource === 'enhanced' && enhancedDescription 
         ? enhancedDescription 
         : formData.description;
@@ -146,7 +145,7 @@ const EditProduct = () => {
       
       const result = await productService.updateProduct(id, productData);
       console.log('Product updated successfully:', result);
-      navigate('/'); // Navigate back to dashboard
+      navigate('/');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to update product');
     } finally {
@@ -156,257 +155,284 @@ const EditProduct = () => {
 
   if (loading) {
     return (
-      <div className="container">
-        <div className="form-container">
+      <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6 sm:p-8">
           <SkeletonLoader type="text" lines={1} height="32px" width="200px" />
-          <div style={{ marginTop: '2rem' }}>
+          <div className="mt-8 space-y-4">
+            <SkeletonLoader type="card" />
+            <SkeletonLoader type="card" />
             <SkeletonLoader type="card" />
           </div>
         </div>
       </div>
     );
   }
-  if (error) return <div className="error">{error}</div>;
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6 sm:p-8">
+          <div className="bg-red-50 text-red-700 p-4 rounded-lg">
+            {error}
+          </div>
+          <button 
+            onClick={() => navigate(-1)}
+            className="mt-4 flex items-center gap-2 text-blue-600 hover:text-blue-800"
+          >
+            <ArrowLeft size={16} />
+            Go back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container">
-      <div className="form-container">
-        <h2 className="form-title">Edit Product</h2>
-        {error && <div className="error">{error}</div>}
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="name" className="form-label">Product Name</label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              className="form-input"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6 sm:p-8">
+        <div className="flex items-center mb-6">
+          <button 
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-1 text-blue-600 hover:text-blue-800 mr-4"
+          >
+            <ArrowLeft size={16} />
+          </button>
+          <h2 className="text-2xl font-bold text-gray-900">Edit Product</h2>
+        </div>
+        
+        {error && (
+          <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6">
+            {error}
           </div>
-          <div className="form-group">
-            <label htmlFor="price" className="form-label">Price</label>
-            <input
-              type="number"
-              id="price"
-              name="price"
-              className="form-input"
-              value={formData.price}
-              onChange={handleChange}
-              required
-              min="0"
-              step="0.01"
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="quantity" className="form-label">Quantity</label>
-            <input
-              type="number"
-              id="quantity"
-              name="quantity"
-              className="form-input"
-              value={formData.quantity}
-              onChange={handleChange}
-              required
-              min="0"
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="category" className="form-label">Category</label>
-            <input
-              type="text"
-              id="category"
-              name="category"
-              className="form-input"
-              value={formData.category}
-              onChange={handleChange}
-            />
-          </div>
-          
-          {/* Description Enhancement Section */}
-          <div className="form-group">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <label htmlFor="description" className="form-label">Description</label>
-              <button
-                type="button"
-                onClick={handlePreviewDescription}
-                disabled={previewLoading || !formData.name || !formData.price}
-                style={{
-                  padding: '6px 12px',
-                  fontSize: '12px',
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  opacity: previewLoading || !formData.name || !formData.price ? 0.6 : 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.25rem'
-                }}
-              >
-                {previewLoading && <LoadingSpinner size="small" color="white" />}
-                {previewLoading ? 'Generating...' : '✨ Enhance with AI'}
-              </button>
+        )}
+        
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                Product Name *
+              </label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
             </div>
             
-            <textarea
-              id="description"
-              name="description"
-              className="form-input"
-              value={formData.description}
-              onChange={handleChange}
-              rows="2"
-              placeholder="Enter description (optional) - AI can create a concise version"
-            />
+            <div>
+              <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
+                Price *
+              </label>
+              <input
+                type="number"
+                id="price"
+                name="price"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                value={formData.price}
+                onChange={handleChange}
+                required
+                min="0"
+                step="0.01"
+              />
+            </div>
             
-            {/* Enhanced Description Preview */}
-            {showPreview && enhancedDescription && (
-              <div style={{ marginTop: '15px', padding: '15px', backgroundColor: '#f8f9fa', border: '1px solid #dee2e6', borderRadius: '8px' }}>
-                <h4 style={{ margin: '0 0 10px 0', color: '#28a745', fontSize: '14px' }}>
-                  ✨ AI-Generated Enhancement Preview
-                </h4>
-                
-                {/* Enhanced Description */}
-                <div style={{ marginBottom: '15px' }}>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#495057', marginBottom: '5px', display: 'block' }}>
-                    Enhanced Description:
-                  </label>
-                  <div style={{ 
-                    padding: '12px', 
-                    backgroundColor: 'white', 
-                    border: '1px solid #e9ecef', 
-                    borderRadius: '6px',
-                    lineHeight: '1.5',
-                    fontSize: '14px'
-                  }}>
-                    {enhancedDescription}
-                  </div>
-                </div>
-
-                {/* Suggested Category */}
-                {categoryGenerated && suggestedCategory && (
-                  <div style={{ marginBottom: '15px' }}>
-                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#495057', marginBottom: '5px', display: 'block' }}>
-                      Suggested Category:
-                    </label>
-                    <div style={{ 
-                      padding: '12px', 
-                      backgroundColor: '#f8f9fa', 
-                      border: '1px solid #dee2e6', 
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      fontWeight: 'bold',
-                      color: '#007bff'
-                    }}>
-                      {suggestedCategory}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Description Choice */}
-                <div style={{ marginBottom: '15px' }}>
-                  <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#495057', marginBottom: '8px', display: 'block' }}>
-                    Choose description to use:
-                  </label>
-                  <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', fontSize: '13px', cursor: 'pointer' }}>
-                      <input
-                        type="radio"
-                        name="descriptionSource"
-                        value="original"
-                        checked={descriptionSource === 'original'}
-                        onChange={() => handleDescriptionSourceChange('original')}
-                        style={{ marginRight: '6px' }}
-                      />
-                      Use Current Description
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', fontSize: '13px', cursor: 'pointer' }}>
-                      <input
-                        type="radio"
-                        name="descriptionSource"
-                        value="enhanced"
-                        checked={descriptionSource === 'enhanced'}
-                        onChange={() => handleDescriptionSourceChange('enhanced')}
-                        style={{ marginRight: '6px' }}
-                      />
-                      Use AI-Generated Description ✨
-                    </label>
-                  </div>
-                </div>
-
-                {/* Category Choice */}
-                {categoryGenerated && suggestedCategory && (
-                  <div style={{ marginBottom: '10px' }}>
-                    <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#495057', marginBottom: '8px', display: 'block' }}>
-                      Choose category to use:
-                    </label>
-                    <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', fontSize: '13px', cursor: 'pointer' }}>
-                        <input
-                          type="radio"
-                          name="categorySource"
-                          value="original"
-                          checked={categorySource === 'original'}
-                          onChange={() => handleCategorySourceChange('original')}
-                          style={{ marginRight: '6px' }}
-                        />
-                        Use Current Category {formData.category ? `(${formData.category})` : '(None)'}
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', fontSize: '13px', cursor: 'pointer' }}>
-                        <input
-                          type="radio"
-                          name="categorySource"
-                          value="suggested"
-                          checked={categorySource === 'suggested'}
-                          onChange={() => handleCategorySourceChange('suggested')}
-                          style={{ marginRight: '6px' }}
-                        />
-                        Use AI-Suggested Category ({suggestedCategory}) ✨
-                      </label>
-                    </div>
-                  </div>
-                )}
+            <div>
+              <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
+                Quantity *
+              </label>
+              <input
+                type="number"
+                id="quantity"
+                name="quantity"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                value={formData.quantity}
+                onChange={handleChange}
+                required
+                min="0"
+              />
+            </div>
+            
+            <div className="sm:col-span-2">
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                Category
+              </label>
+              <input
+                type="text"
+                id="category"
+                name="category"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                value={formData.category}
+                onChange={handleChange}
+              />
+            </div>
+            
+            <div className="sm:col-span-2">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-1">
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                  Description
+                </label>
+                <button
+                  type="button"
+                  onClick={handlePreviewDescription}
+                  disabled={previewLoading || !formData.name || !formData.price}
+                  className="flex items-center justify-center gap-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium hover:bg-blue-200 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {previewLoading ? (
+                    <>
+                      <LoadingSpinner size="small" color="blue" />
+                      <span>Generating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={16} />
+                      <span>Enhance with AI</span>
+                    </>
+                  )}
+                </button>
               </div>
-            )}
+              
+              <textarea
+                id="description"
+                name="description"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                value={formData.description}
+                onChange={handleChange}
+                rows="3"
+                placeholder="Enter description (optional) - AI can create a concise version"
+              />
+              
+              {showPreview && enhancedDescription && (
+                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h4 className="text-blue-800 font-medium mb-3 flex items-center gap-1">
+                    <Sparkles size={16} />
+                    AI-Generated Enhancement Preview
+                  </h4>
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Enhanced Description:
+                    </label>
+                    <div className="p-3 bg-white border border-gray-200 rounded-md text-sm">
+                      {enhancedDescription}
+                    </div>
+                  </div>
+
+                  {categoryGenerated && suggestedCategory && (
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Suggested Category:
+                      </label>
+                      <div className="p-3 bg-blue-100 border border-blue-200 rounded-md text-sm font-medium text-blue-700">
+                        {suggestedCategory}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Choose description to use:
+                    </label>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="radio"
+                          name="descriptionSource"
+                          value="original"
+                          checked={descriptionSource === 'original'}
+                          onChange={() => handleDescriptionSourceChange('original')}
+                          className="text-blue-600 focus:ring-blue-500"
+                        />
+                        Use Current Description
+                      </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="radio"
+                          name="descriptionSource"
+                          value="enhanced"
+                          checked={descriptionSource === 'enhanced'}
+                          onChange={() => handleDescriptionSourceChange('enhanced')}
+                          className="text-blue-600 focus:ring-blue-500"
+                        />
+                        Use AI-Generated Description
+                      </label>
+                    </div>
+                  </div>
+
+                  {categoryGenerated && suggestedCategory && (
+                    <div className="mb-3">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Choose category to use:
+                      </label>
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="radio"
+                            name="categorySource"
+                            value="original"
+                            checked={categorySource === 'original'}
+                            onChange={() => handleCategorySourceChange('original')}
+                            className="text-blue-600 focus:ring-blue-500"
+                          />
+                          Use Current Category {formData.category && `(${formData.category})`}
+                        </label>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="radio"
+                            name="categorySource"
+                            value="suggested"
+                            checked={categorySource === 'suggested'}
+                            onChange={() => handleCategorySourceChange('suggested')}
+                            className="text-blue-600 focus:ring-blue-500"
+                          />
+                          Use AI-Suggested Category ({suggestedCategory})
+                        </label>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            <div className="sm:col-span-2">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  name="enhanceDescription"
+                  checked={formData.enhanceDescription}
+                  onChange={handleChange}
+                  className="text-blue-600 focus:ring-blue-500"
+                />
+                Automatically generate description and category with AI when updating product
+              </label>
+            </div>
           </div>
           
-          {/* Auto-enhance option */}
-          <div className="form-group">
-            <label style={{ display: 'flex', alignItems: 'center', fontSize: '14px', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                name="enhanceDescription"
-                checked={formData.enhanceDescription}
-                onChange={handleChange}
-                style={{ marginRight: '8px' }}
-              />
-              Automatically generate description and category with AI when updating product
-            </label>
-          </div>
-          <div className="form-actions">
+          <div className="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4">
             <button
               type="button"
               onClick={() => navigate('/')}
-              className="btn btn-secondary"
+              className="flex-1 py-3 px-4 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               disabled={submitLoading}
             >
               Cancel
             </button>
             <button 
               type="submit" 
-              className="btn btn-primary"
+              className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-all duration-300 shadow-md flex items-center justify-center disabled:opacity-50"
               disabled={submitLoading}
-              style={{ 
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}
             >
-              {submitLoading && <LoadingSpinner size="small" color="white" />}
-              {submitLoading ? 'Updating Product...' : 'Update Product'}
+              {submitLoading ? (
+                <>
+                  <LoadingSpinner size="small" color="white" />
+                  <span className="ml-2">Updating Product...</span>
+                </>
+              ) : (
+                'Update Product'
+              )}
             </button>
           </div>
         </form>

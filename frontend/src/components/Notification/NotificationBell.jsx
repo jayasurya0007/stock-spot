@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getNotifications, getUnreadCount, markNotificationAsRead, markAllNotificationsAsRead, checkNotificationTime } from '../../services/notifications';
-import { LoadingSpinner, SkeletonLoader } from '../Loading';
-import './NotificationBell.css';
+import { LoadingSpinner } from '../Loading';
+import { Bell, CheckCircle, Clock, Sparkles, X } from 'lucide-react';
 
 const NotificationBell = () => {
   const [notifications, setNotifications] = useState([]);
@@ -12,20 +12,17 @@ const NotificationBell = () => {
   const [page, setPage] = useState(1);
   const dropdownRef = useRef(null);
 
-  // Fetch unread count on component mount
   useEffect(() => {
     fetchUnreadCount();
     
-    // Set up polling for real-time updates and notification time checking
     const interval = setInterval(() => {
       fetchUnreadCount();
-      checkForNotificationTime(); // Check if it's notification time
-    }, 30000); // Check every 30 seconds
+      checkForNotificationTime();
+    }, 30000);
     
     return () => clearInterval(interval);
   }, []);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -51,17 +48,10 @@ const NotificationBell = () => {
       const response = await checkNotificationTime();
       
       if (response.success && response.data.isNotificationTime && response.data.notificationsCreated > 0) {
-        console.log(`🔔 Notification time! Created ${response.data.notificationsCreated} notifications`);
-        
-        // Refresh unread count to show new notifications
         await fetchUnreadCount();
-        
-        // Show a subtle notification (optional - you can remove this if you don't want alerts)
-        // alert(`New notifications created: ${response.data.notificationsCreated} low stock alerts`);
       }
     } catch (error) {
-      // Silently handle errors to avoid spamming console
-      // console.error('Error checking notification time:', error);
+      // Silently handle errors
     }
   };
 
@@ -154,27 +144,27 @@ const NotificationBell = () => {
   };
 
   return (
-    <div className="notification-bell" ref={dropdownRef}>
+    <div className="relative" ref={dropdownRef}>
       <button 
-        className="notification-bell-button"
+        className="relative p-2 text-gray-600 hover:text-blue-600 transition-colors"
         onClick={handleBellClick}
         aria-label={`Notifications (${unreadCount} unread)`}
       >
-        <span className="bell-icon">🔔</span>
+        <Bell size={24} />
         {unreadCount > 0 && (
-          <span className="notification-badge">
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="notification-dropdown">
-          <div className="notification-header">
-            <h3>Notifications</h3>
+        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-lg border border-gray-200 z-50">
+          <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+            <h3 className="font-bold text-gray-900">Notifications</h3>
             {unreadCount > 0 && (
               <button 
-                className="mark-all-read-btn"
+                className="text-blue-600 text-sm font-medium hover:text-blue-700"
                 onClick={handleMarkAllAsRead}
               >
                 Mark all read
@@ -182,14 +172,22 @@ const NotificationBell = () => {
             )}
           </div>
 
-          <div className="notification-list">
+          <div className="max-h-96 overflow-y-auto">
             {loading && notifications.length === 0 ? (
-              <div style={{ padding: '1rem' }}>
-                <SkeletonLoader type="list" lines={3} />
+              <div className="p-4 space-y-4">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                ))}
               </div>
             ) : notifications.length === 0 ? (
-              <div className="no-notifications">
-                <span className="no-notifications-icon">📭</span>
+              <div className="p-6 text-center text-gray-500">
+                <div className="mx-auto mb-3">
+                  <Bell size={32} className="text-gray-300" />
+                </div>
                 <p>No notifications yet</p>
               </div>
             ) : (
@@ -197,47 +195,54 @@ const NotificationBell = () => {
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`notification-item ${!notification.is_read ? 'unread' : ''}`}
+                    className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${
+                      !notification.is_read ? 'bg-blue-50' : ''
+                    }`}
                     onClick={() => handleNotificationClick(notification)}
                   >
-                    <div className="notification-content">
-                      <div className="notification-icon">
+                    <div className="flex items-start space-x-3">
+                      <div className="text-xl flex-shrink-0">
                         {getNotificationIcon(notification)}
                       </div>
-                      <div className="notification-body">
-                        <div className="notification-title">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-gray-900 mb-1">
                           {notification.title}
                         </div>
-                        <div className="notification-message">
+                        <div className="text-sm text-gray-600 mb-2">
                           {notification.message}
                         </div>
-                        <div className="notification-meta">
-                          <span className="notification-time">
-                            {formatNotificationTime(notification.created_at)}
-                          </span>
+                        <div className="flex items-center text-xs text-gray-500">
+                          <Clock size={12} className="mr-1" />
+                          <span>{formatNotificationTime(notification.created_at)}</span>
                           {notification.is_ai_enhanced && (
-                            <span className="ai-badge">✨ AI Enhanced</span>
+                            <span className="ml-2 flex items-center">
+                              <Sparkles size={12} className="mr-1" />
+                              AI Enhanced
+                            </span>
                           )}
                         </div>
                       </div>
+                      {!notification.is_read && (
+                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
+                      )}
                     </div>
-                    {!notification.is_read && (
-                      <div className="unread-indicator"></div>
-                    )}
                   </div>
                 ))}
                 
                 {hasMore && (
-                  <button 
-                    className="load-more-btn"
-                    onClick={loadMoreNotifications}
-                    disabled={loading}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      {loading && <LoadingSpinner size="small" color="primary" />}
-                      {loading ? 'Loading...' : 'Load more'}
-                    </div>
-                  </button>
+                  <div className="p-4 border-t border-gray-200">
+                    <button 
+                      className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center"
+                      onClick={loadMoreNotifications}
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <LoadingSpinner size="small" color="gray" />
+                      ) : (
+                        'Load more notifications'
+                      )}
+                    </button>
+                  </div>
                 )}
               </>
             )}

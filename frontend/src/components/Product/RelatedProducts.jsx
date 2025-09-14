@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { productService } from '../../services/products';
 import { LoadingSpinner } from '../Loading';
+import { ExternalLink, RotateCw } from 'lucide-react';
 
 const RelatedProducts = ({ productId, productName, onProductSelect }) => {
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -30,11 +31,11 @@ const RelatedProducts = ({ productId, productName, onProductSelect }) => {
   };
 
   const getMatchColor = (percentage) => {
-    if (percentage >= 80) return '#28a745'; // Green for very high
-    if (percentage >= 60) return '#17a2b8'; // Blue for high  
-    if (percentage >= 40) return '#ffc107'; // Yellow for medium
-    if (percentage >= 20) return '#fd7e14'; // Orange for low
-    return '#dc3545'; // Red for very low
+    if (percentage >= 80) return 'bg-green-100 text-green-800 border-green-200';
+    if (percentage >= 60) return 'bg-blue-100 text-blue-800 border-blue-200';
+    if (percentage >= 40) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    if (percentage >= 20) return 'bg-orange-100 text-orange-800 border-orange-200';
+    return 'bg-red-100 text-red-800 border-red-200';
   };
 
   const getMatchIcon = (matchLevel) => {
@@ -49,7 +50,7 @@ const RelatedProducts = ({ productId, productName, onProductSelect }) => {
 
   if (loading) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center' }}>
+      <div className="p-6 text-center">
         <LoadingSpinner size="medium" text="Finding related products..." />
       </div>
     );
@@ -57,26 +58,14 @@ const RelatedProducts = ({ productId, productName, onProductSelect }) => {
 
   if (error) {
     return (
-      <div style={{ 
-        padding: '20px', 
-        backgroundColor: '#f8d7da', 
-        color: '#721c24', 
-        borderRadius: '8px',
-        border: '1px solid #f5c6cb'
-      }}>
-        <h4>Error loading related products</h4>
-        <p>{error}</p>
+      <div className="p-6 bg-red-50 border border-red-200 rounded-xl text-red-800">
+        <h4 className="font-medium mb-2">Error loading related products</h4>
+        <p className="mb-4">{error}</p>
         <button 
           onClick={fetchRelatedProducts}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#dc3545',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors mx-auto"
         >
+          <RotateCw size={16} />
           Try Again
         </button>
       </div>
@@ -85,160 +74,82 @@ const RelatedProducts = ({ productId, productName, onProductSelect }) => {
 
   if (relatedProducts.length === 0) {
     return (
-      <div style={{ 
-        padding: '20px', 
-        backgroundColor: '#e2e3e5', 
-        color: '#495057', 
-        borderRadius: '8px',
-        textAlign: 'center'
-      }}>
-        <h4>No related products found</h4>
+      <div className="p-6 bg-gray-100 border border-gray-200 rounded-xl text-center">
+        <h4 className="font-medium mb-2">No related products found</h4>
         <p>We couldn't find any products similar to "{productName || 'this product'}".</p>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '20px' }}>
-      <div style={{ marginBottom: '20px' }}>
-        <h3 style={{ 
-          color: '#2c3e50', 
-          borderBottom: '2px solid #3498db', 
-          paddingBottom: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px'
-        }}>
-          🔗 Products Related to "{targetProduct?.name || productName}"
+    <div className="p-4 sm:p-6">
+      <div className="mb-6">
+        <h3 className="text-xl font-bold text-gray-900 border-b-2 border-blue-500 pb-2 flex items-center gap-2">
+          <span>🔗</span>
+          Products Related to "{targetProduct?.name || productName}"
         </h3>
-        <p style={{ color: '#666', fontSize: '14px', marginTop: '8px' }}>
+        <p className="text-gray-600 text-sm mt-2">
           Found {relatedProducts.length} similar products, sorted by match percentage (highest first)
         </p>
       </div>
 
-      <div style={{ 
-        display: 'grid', 
-        gap: '16px',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))'
-      }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {relatedProducts.map((product, index) => {
           const matchPercentage = product.similarity_metrics?.match_percentage || 0;
           const matchLevel = product.similarity_metrics?.match_level || 'low';
+          const matchColorClass = getMatchColor(matchPercentage);
           
           return (
             <div 
               key={product.id} 
-              style={{
-                border: `2px solid ${getMatchColor(matchPercentage)}`,
-                borderRadius: '12px',
-                padding: '16px',
-                backgroundColor: '#ffffff',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                cursor: onProductSelect ? 'pointer' : 'default'
-              }}
+              className={`border-2 rounded-xl p-4 bg-white shadow-sm transition-all duration-200 hover:shadow-md ${
+                onProductSelect ? 'cursor-pointer' : 'cursor-default'
+              }`}
               onClick={() => onProductSelect && onProductSelect(product)}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-              }}
             >
-              {/* Match percentage badge */}
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'flex-start',
-                marginBottom: '12px'
-              }}>
-                <span style={{
-                  backgroundColor: getMatchColor(matchPercentage),
-                  color: 'white',
-                  padding: '6px 12px',
-                  borderRadius: '20px',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}>
+              <div className="flex justify-between items-start mb-3">
+                <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold border ${matchColorClass}`}>
                   {getMatchIcon(matchLevel)} {matchPercentage.toFixed(1)}%
                 </span>
-                <span style={{
-                  fontSize: '12px',
-                  color: '#666',
-                  backgroundColor: '#f8f9fa',
-                  padding: '4px 8px',
-                  borderRadius: '12px',
-                  textTransform: 'capitalize'
-                }}>
+                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
                   #{index + 1}
                 </span>
               </div>
 
-              {/* Product details */}
-              <h4 style={{ 
-                color: '#2c3e50', 
-                marginBottom: '8px',
-                fontSize: '18px',
-                fontWeight: 'bold'
-              }}>
+              <h4 className="font-bold text-gray-900 mb-2 text-lg">
                 {product.name}
               </h4>
               
-              <div style={{ marginBottom: '12px' }}>
-                <p style={{ margin: '4px 0', fontSize: '14px' }}>
-                  <strong>Price:</strong> ${product.price}
+              <div className="mb-3 space-y-1">
+                <p className="text-sm">
+                  <span className="font-medium">Price:</span> ${product.price}
                 </p>
-                <p style={{ margin: '4px 0', fontSize: '14px' }}>
-                  <strong>Quantity:</strong> {product.quantity} available
+                <p className="text-sm">
+                  <span className="font-medium">Quantity:</span> {product.quantity} available
                 </p>
                 {product.category && (
-                  <p style={{ margin: '4px 0', fontSize: '14px' }}>
-                    <strong>Category:</strong> 
-                    <span style={{
-                      backgroundColor: '#e9ecef',
-                      padding: '2px 6px',
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                      marginLeft: '4px'
-                    }}>
+                  <p className="text-sm">
+                    <span className="font-medium">Category:</span>
+                    <span className="ml-1 bg-gray-100 px-2 py-1 rounded-md text-xs">
                       {product.category}
                     </span>
                   </p>
                 )}
               </div>
 
-              {/* Merchant info */}
-              <div style={{ 
-                borderTop: '1px solid #e9ecef',
-                paddingTop: '12px',
-                marginTop: '12px'
-              }}>
-                <p style={{ margin: '4px 0', fontSize: '14px', color: '#495057' }}>
-                  <strong>🏪 Shop:</strong> {product.merchant?.shop_name}
+              <div className="border-t border-gray-200 pt-3 mt-3">
+                <p className="text-sm text-gray-700 mb-1">
+                  <span className="font-medium">🏪 Shop:</span> {product.merchant?.shop_name}
                 </p>
                 {product.merchant?.address && (
-                  <p style={{ margin: '4px 0', fontSize: '12px', color: '#6c757d' }}>
+                  <p className="text-xs text-gray-500">
                     📍 {product.merchant.address}
                   </p>
                 )}
               </div>
 
-              {/* Description */}
               {product.description && (
-                <div style={{ 
-                  marginTop: '12px',
-                  padding: '8px',
-                  backgroundColor: '#f8f9fa',
-                  borderRadius: '6px',
-                  fontSize: '13px',
-                  color: '#495057',
-                  lineHeight: '1.4'
-                }}>
+                <div className="mt-3 p-2 bg-gray-50 rounded-lg text-sm text-gray-600">
                   {product.description.length > 100 
                     ? `${product.description.substring(0, 100)}...`
                     : product.description
@@ -246,31 +157,25 @@ const RelatedProducts = ({ productId, productName, onProductSelect }) => {
                 </div>
               )}
 
-              {/* Match level indicator */}
-              <div style={{ 
-                marginTop: '12px',
-                fontSize: '12px',
-                color: '#666',
-                textAlign: 'center',
-                fontStyle: 'italic'
-              }}>
+              <div className="mt-3 text-xs text-gray-500 text-center italic">
                 {matchLevel.replace('_', ' ').toUpperCase()} similarity match
               </div>
+
+              {onProductSelect && (
+                <div className="mt-3 flex justify-end">
+                  <button className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800">
+                    View details
+                    <ExternalLink size={12} />
+                  </button>
+                </div>
+              )}
             </div>
           );
         })}
       </div>
 
       {relatedProducts.length >= 10 && (
-        <div style={{ 
-          textAlign: 'center', 
-          marginTop: '20px',
-          padding: '12px',
-          backgroundColor: '#f8f9fa',
-          borderRadius: '8px',
-          color: '#6c757d',
-          fontSize: '14px'
-        }}>
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg text-center text-gray-600 text-sm">
           Showing top 10 related products. The results are sorted by similarity percentage.
         </div>
       )}
