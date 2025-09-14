@@ -13,11 +13,28 @@ export const searchProducts = async (req, res) => {
 
   try {
     const refinedQuery = await rewriteQueryWithPerplexity(query);
+    console.log('🔍 Search Debug Info:');
+    console.log('Original query:', query);
+    console.log('Perplexity refined query:', refinedQuery);
+    
     const embedding = getEmbedding(refinedQuery);
 
     const conn = await pool.getConnection();
     
-    // First search: Exact name matches (highest priority)
+    // First search: Exact name matches using both original and refined queries
+    // Also break down refined query into individual words for better matching
+    const searchTerms = [query, refinedQuery].filter(term => term && term.trim());
+    const refinedWords = refinedQuery ? refinedQuery.toLowerCase().split(/\s+/).filter(word => word.length > 2) : [];
+    const allSearchTerms = [...searchTerms, ...refinedWords].filter((term, index, arr) => arr.indexOf(term) === index);
+    
+    console.log('Search terms:', searchTerms);
+    console.log('Refined words:', refinedWords);
+    console.log('All search terms:', allSearchTerms);
+    
+    const searchConditions = allSearchTerms.map(() => 'LOWER(p.name) LIKE LOWER(?) OR LOWER(p.description) LIKE LOWER(?) OR LOWER(p.category) LIKE LOWER(?)').join(' OR ');
+    const searchParams = allSearchTerms.flatMap(term => [`%${term}%`, `%${term}%`, `%${term}%`]);
+    console.log('Search parameters:', searchParams);
+    
     const [exactMatches] = await conn.execute(
       `SELECT
          p.id,
@@ -25,6 +42,7 @@ export const searchProducts = async (req, res) => {
          p.price,
          p.quantity,
          p.description,
+         p.category,
          m.id as merchant_id,
          m.shop_name,
          m.latitude,
@@ -39,7 +57,7 @@ export const searchProducts = async (req, res) => {
        FROM products p
        JOIN merchants m ON p.merchant_id = m.id
        WHERE p.quantity > 0
-         AND LOWER(p.name) LIKE LOWER(?)
+         AND (${searchConditions})
          AND (6371000 * ACOS(
            COS(RADIANS(?)) * COS(RADIANS(m.latitude)) *
            COS(RADIANS(?) - RADIANS(m.longitude)) +
@@ -49,7 +67,7 @@ export const searchProducts = async (req, res) => {
        LIMIT 10;`,
       [
         lat, lng, lat,
-        `%${query}%`,
+        ...searchParams,
         lat, lng, lat,
         distance
       ]
@@ -66,6 +84,7 @@ export const searchProducts = async (req, res) => {
          p.price,
          p.quantity,
          p.description,
+         p.category,
          m.id as merchant_id,
          m.shop_name,
          m.latitude,
@@ -98,6 +117,14 @@ export const searchProducts = async (req, res) => {
     );
 
     conn.release();
+
+    console.log('📊 Database Results:');
+    console.log('Exact matches found:', exactMatches.length);
+    console.log('Related products found:', similarProducts.length);
+    
+    if (exactMatches.length > 0) {
+      console.log('Exact match products:', exactMatches.map(p => ({ name: p.name, category: p.category, description: p.description })));
+    }
 
     // Combine results with exact matches first
     const exactResults = exactMatches.map(row => ({
