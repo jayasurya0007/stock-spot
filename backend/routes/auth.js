@@ -9,7 +9,7 @@ const router = express.Router();
 
 // Register new user
 router.post('/register', async (req, res) => {
-  const { email, password, role = 'user', latitude, longitude } = req.body;
+  const { email, password, role = 'user', latitude, longitude, shop_name, address, owner_name, phone } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password are required' });
@@ -26,15 +26,20 @@ router.post('/register', async (req, res) => {
     );
     const userId = result.insertId;
 
-    // If merchant, create merchant record with GPS
+    // If merchant, create merchant record with GPS and shop details
     if (role === 'merchant') {
       if (!latitude || !longitude) {
         conn.release();
-        return res.status(400).json({ error: 'Merchant registration requires latitude and longitude' });
+        return res.status(400).json({ error: 'Merchant registration requires location access. Please allow location permissions.' });
       }
+      
+      // Create minimal merchant record - shop details can be added later
+      const merchantShopName = shop_name || `${email.split('@')[0]}'s Shop`;
+      const merchantAddress = address || 'Address not provided';
+      
       await conn.execute(
-        'INSERT INTO merchants (user_id, latitude, longitude) VALUES (?, ?, ?)',
-        [userId, latitude, longitude]
+        'INSERT INTO merchants (user_id, shop_name, address, latitude, longitude, owner_name, phone) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [userId, merchantShopName, merchantAddress, latitude, longitude, owner_name || null, phone || null]
       );
     }
 
