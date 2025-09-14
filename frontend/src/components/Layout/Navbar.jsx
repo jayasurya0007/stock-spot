@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import NotificationBell from '../Notification/NotificationBell';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -30,6 +31,9 @@ const Navbar = () => {
                     <li>
                       <Link to="/shop/update" className="nav-link">Update Shop Details</Link>
                     </li>
+                    <li>
+                      <Link to="/notifications/settings" className="nav-link">Notification Settings</Link>
+                    </li>
                   </>
                 )}
                 <li>
@@ -38,6 +42,11 @@ const Navbar = () => {
                 <li>
                   <Link to="/search" className="nav-link">Search</Link>
                 </li>
+                {user.role === 'merchant' && (
+                  <li className="nav-notification">
+                    <NotificationBell />
+                  </li>
+                )}
                 <li>
                   <button onClick={handleLogout} className="nav-link">
                     Logout

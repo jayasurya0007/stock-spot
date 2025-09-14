@@ -16,6 +16,7 @@ import EditProduct from './components/Product/EditProduct';
 import SearchResults from './components/Search/SearchResults';
 import CitySearch from './components/Search/CitySearch';
 import MapView from './components/Map/MapView';
+import NotificationSettings from './components/Notification/NotificationSettings';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -68,6 +69,7 @@ const AppRoutes = () => {
               <Route path="products/add" element={<AddProduct />} />
               <Route path="products/edit/:id" element={<EditProduct />} />
               <Route path="shop/update" element={<UpdateShopDetails />} />
+              <Route path="notifications/settings" element={<NotificationSettings />} />
             </>
           ) : (
             /* User dashboard: product search and map */
