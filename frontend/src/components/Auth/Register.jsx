@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import MenuItem from '@mui/material/MenuItem';
+import CircularProgress from '@mui/material/CircularProgress';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -14,7 +22,8 @@ const Register = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [locationStatus, setLocationStatus] = useState('');
-  
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -42,21 +51,22 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (!formData.email || !formData.password || !formData.confirmPassword) {
-      return setError('Please fill in all fields');
+      setError('Please fill in all fields');
+      setOpenSnackbar(true);
+      return;
     }
-    
     if (formData.password !== formData.confirmPassword) {
-      return setError('Passwords do not match');
+      setError('Passwords do not match');
+      setOpenSnackbar(true);
+      return;
     }
-    
     try {
       setError('');
       setLoading(true);
-      // If merchant, require GPS
       if (formData.role === 'merchant' && (!formData.latitude || !formData.longitude)) {
         setError('Please allow location access for merchant registration');
+        setOpenSnackbar(true);
         setLoading(false);
         return;
       }
@@ -71,125 +81,90 @@ const Register = () => {
         navigate('/');
       } else {
         setError(result.message);
+        setOpenSnackbar(true);
       }
     } catch (err) {
       setError('Failed to register');
+      setOpenSnackbar(true);
     }
     setLoading(false);
   };
 
   return (
-    <div className="container">
-      <div className="form-container">
-        <h2 className="form-title">Create Account</h2>
-        {error && <div className="error">{error}</div>}
+    <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
+      <Box sx={{ width: 400, p: 4, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 3 }}>
+        <Typography variant="h5" component="h2" mb={2} align="center">Create Account</Typography>
+        {/* Error Snackbar */}
+        <Snackbar open={openSnackbar} autoHideDuration={4000} onClose={() => setOpenSnackbar(false)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+          <Alert onClose={() => setOpenSnackbar(false)} severity="error" sx={{ width: '100%' }}>
+            {error}
+          </Alert>
+        </Snackbar>
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="email" className="form-label">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              className="form-input"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="password" className="form-label">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              className="form-input"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              className="form-input"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="role" className="form-label">Role</label>
-            <select
-              id="role"
-              name="role"
-              className="form-input"
-              value={formData.role}
-              onChange={handleChange}
-            >
-              <option value="user">User</option>
-              <option value="merchant">Merchant</option>
-              <option value="admin">Admin</option>
-            </select>
-            {formData.role === 'merchant' && (
-              <>
-                <div className="text-xs text-blue-600 mt-2">{locationStatus}</div>
-                <div className="flex gap-2 mt-2">
-                  <input
-                    type="number"
-                    step="any"
-                    placeholder="Latitude"
-                    className="form-input"
-                    value={formData.latitude}
-                    onChange={e => setFormData(f => ({ ...f, latitude: e.target.value }))}
-                  />
-                  <input
-                    type="number"
-                    step="any"
-                    placeholder="Longitude"
-                    className="form-input"
-                    value={formData.longitude}
-                    onChange={e => setFormData(f => ({ ...f, longitude: e.target.value }))}
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => {
-                      if (navigator.geolocation) {
-                        setLocationStatus('Getting your location...');
-                        navigator.geolocation.getCurrentPosition(
-                          (pos) => {
-                            setFormData(f => ({ ...f, latitude: pos.coords.latitude, longitude: pos.coords.longitude }));
-                            setLocationStatus('Location detected ✓');
-                          },
-                          () => setLocationStatus('Failed to get location')
-                        );
-                      } else {
-                        setLocationStatus('Geolocation not supported');
-                      }
-                    }}
-                  >
-                    Use My Current Location
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-          <button 
-            type="submit" 
-            className="btn btn-primary btn-block"
+          <TextField
+            label="Email"
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            required
+          />
+          <TextField
+            label="Password"
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            required
+          />
+          <TextField
+            label="Confirm Password"
+            type="password"
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            required
+          />
+          <TextField
+            select
+            label="Role"
+            name="role"
+            value={formData.role}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            required
+          >
+            <MenuItem value="user">User</MenuItem>
+            <MenuItem value="merchant">Merchant</MenuItem>
+          </TextField>
+          {formData.role === 'merchant' && (
+            <Box mb={2}>
+              <Typography variant="body2" color="textSecondary">{locationStatus}</Typography>
+            </Box>
+          )}
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            fullWidth
+            sx={{ mt: 2, position: 'relative' }}
             disabled={loading}
           >
-            {loading ? 'Creating Account...' : 'Create Account'}
-          </button>
+            {loading ? <CircularProgress size={24} color="inherit" /> : 'Register'}
+          </Button>
         </form>
-        <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+        <Box mt={2} textAlign="center">
           Already have an account? <Link to="/login">Login here</Link>
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

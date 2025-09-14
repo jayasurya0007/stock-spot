@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
+// import Button from '@mui/material/Button';
+import LocationCityIcon from '@mui/icons-material/LocationCity';
 import { useNavigate } from 'react-router-dom';
 import { searchService } from '../../services/search';
 import LeafletMap from '../Map/LeafletMap';
+import { Card, CardContent, Typography, Button, Box, Chip, Grid, Avatar } from '@mui/material';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 
 const CitySearch = () => {
   const navigate = useNavigate();
@@ -161,13 +165,31 @@ const CitySearch = () => {
                 style={{ marginBottom: '1rem' }}
               />
             </div>
-            <button 
-              type="submit" 
-              className="btn btn-primary"
+            <Button
+              type="submit"
+              variant="contained"
+              color="info"
+              startIcon={<LocationCityIcon />}
               disabled={loading}
+              sx={{
+                px: 3,
+                py: 1.5,
+                borderRadius: 2,
+                fontWeight: 'bold',
+                fontSize: 16,
+                boxShadow: 2,
+                textTransform: 'none',
+                mt: 1,
+                mb: 1,
+                '&:hover': {
+                  backgroundColor: 'info.dark',
+                  boxShadow: 4,
+                },
+              }}
+              aria-label="Search using the city"
             >
-              {loading ? 'Searching...' : '🔍 Search Merchants'}
-            </button>
+              {loading ? 'Searching...' : 'Search using the city'}
+            </Button>
           </form>
         ) : (
           <div>
@@ -191,41 +213,52 @@ const CitySearch = () => {
       {error && <div className="error" style={{ marginBottom: '2rem' }}>{error}</div>}
 
       {merchants.length > 0 && (
-        <div className="card">
-          <h2>Found {merchants.length} Merchants</h2>
-          <div style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
-            {merchants.map((merchant) => (
-              <div 
-                key={merchant.id} 
-                onClick={() => handleMerchantClick(merchant)}
-                style={{
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  padding: '20px',
-                  backgroundColor: '#f9f9f9',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = '#e9ecef'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = '#f9f9f9'}
-              >
-                <h3 style={{ color: '#2c3e50', marginBottom: '8px' }}>
-                  🏪 {merchant.shop_name}
-                </h3>
-                <p><strong>Owner:</strong> {merchant.owner_name || 'N/A'}</p>
-                <p><strong>Address:</strong> {merchant.address || 'N/A'}</p>
-                <p><strong>Phone:</strong> {merchant.phone || 'N/A'}</p>
-                <p><strong>Products Available:</strong> {merchant.product_count || 0}</p>
-                {merchant.distance && (
-                  <p><strong>Distance:</strong> {(merchant.distance / 1000).toFixed(2)} km away</p>
-                )}
-                <p style={{ color: '#007bff', fontWeight: 'bold' }}>
-                  Click to view products and location →
-                </p>
-              </div>
+        <Box className="card" sx={{ mt: 4, mb: 4 }}>
+          <Typography variant="h5" fontWeight={700} color="primary.main" gutterBottom>
+            Found {merchants.length} Merchants
+          </Typography>
+          <Grid container spacing={3} sx={{ mt: 1 }}>
+            {merchants.map((merchant, idx) => (
+              <Grid item xs={12} md={6} key={merchant.id}>
+                <Card
+                  onClick={() => handleMerchantClick(merchant)}
+                  sx={{
+                    borderLeft: '6px solid #28a745',
+                    borderRadius: 2,
+                    boxShadow: 2,
+                    p: 2,
+                    mb: 2,
+                    cursor: 'pointer',
+                    transition: 'box-shadow 0.2s',
+                    '&:hover': { boxShadow: 6 },
+                  }}
+                >
+                  <CardContent>
+                    <Box display="flex" alignItems="center" mb={1} gap={2}>
+                      <Avatar sx={{ bgcolor: 'success.main', width: 32, height: 32, fontWeight: 700 }}>{idx + 1}</Avatar>
+                      <Typography variant="h6" fontWeight={700}>{merchant.shop_name}</Typography>
+                    </Box>
+                    <Box display="flex" flexWrap="wrap" gap={1} mb={1}>
+                      <Chip label={`Price: $${merchant.price}`} color="success" size="small" />
+                      <Chip label={`Qty: ${merchant.quantity}`} color="info" size="small" />
+                      <Chip label={`Dist: ${merchant.distance} km`} color="primary" size="small" />
+                    </Box>
+                    <Typography variant="body2" color="text.secondary" mb={1}><b>Description:</b> {merchant.description}</Typography>
+                    <Button
+                      variant="contained"
+                      color="success"
+                      startIcon={<LocationOnIcon />}
+                      sx={{ mt: 1, borderRadius: 2, fontWeight: 'bold' }}
+                      aria-label="View merchant location"
+                    >
+                      View Location
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Grid>
             ))}
-          </div>
-        </div>
+          </Grid>
+        </Box>
       )}
 
       {/* Merchant Details Modal */}

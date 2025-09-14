@@ -1,6 +1,15 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+
+
+import AppBar from '@mui/material/AppBar';
+import Box from '@mui/material/Box';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import MenuIcon from '@mui/icons-material/Menu';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import logo from '../../../public/stockspot-logo.svg';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -12,56 +21,37 @@ const Navbar = () => {
   };
 
   return (
-    <header className="header">
-      <div className="container">
-        <nav className="nav">
-          <div className="nav-brand">
-            <Link to="/" className="nav-link">StockSpot</Link>
-          </div>
-          <ul className="nav-menu">
-            {user ? (
-              <>
-                {/* Authenticated user menu */}
-                {user.role === 'merchant' && (
-                  <>
-                    <li>
-                      <Link to="/" className="nav-link">Dashboard</Link>
-                    </li>
-                    <li>
-                      <Link to="/shop/update" className="nav-link">Update Shop Details</Link>
-                    </li>
-                  </>
-                )}
-                <li>
-                  <Link to="/map" className="nav-link">Map View</Link>
-                </li>
-                <li>
-                  <Link to="/search" className="nav-link">Search</Link>
-                </li>
-                <li>
-                  <button onClick={handleLogout} className="nav-link">
-                    Logout
-                  </button>
-                </li>
-              </>
-            ) : (
-              <>
-                {/* Unauthenticated user menu */}
-                <li>
-                  <Link to="/" className="nav-link">Explore</Link>
-                </li>
-                <li>
-                  <Link to="/login" className="nav-link">Login</Link>
-                </li>
-                <li>
-                  <Link to="/register" className="nav-link">Register</Link>
-                </li>
-              </>
-            )}
-          </ul>
-        </nav>
-      </div>
-    </header>
+    <Box sx={{ flexGrow: 1 }}>
+      <AppBar position="static" color="primary">
+        <Toolbar>
+          <IconButton size="large" edge="start" color="inherit" aria-label="logo" sx={{ mr: 2 }} component={RouterLink} to="/">
+            <img src={logo} alt="StockSpot Logo" style={{ height: 32, width: 32, display: 'block' }} />
+          </IconButton>
+          <Typography variant="h6" component={RouterLink} to="/" sx={{ flexGrow: 1, color: 'inherit', textDecoration: 'none', fontWeight: 700, letterSpacing: 1 }}>
+            StockSpot
+          </Typography>
+          {user ? (
+            <>
+              {user.role === 'merchant' && (
+                <>
+                  <Button color="inherit" component={RouterLink} to="/">Dashboard</Button>
+                  <Button color="inherit" component={RouterLink} to="/shop/update">Update Shop Details</Button>
+                </>
+              )}
+              <Button color="inherit" component={RouterLink} to="/map">Map View</Button>
+              <Button color="inherit" component={RouterLink} to="/search">Search</Button>
+              <Button color="inherit" onClick={handleLogout}>Logout</Button>
+            </>
+          ) : (
+            <>
+              <Button color="inherit" component={RouterLink} to="/">Explore</Button>
+              <Button color="inherit" component={RouterLink} to="/login">Login</Button>
+              <Button color="inherit" component={RouterLink} to="/register">Register</Button>
+            </>
+          )}
+        </Toolbar>
+      </AppBar>
+    </Box>
   );
 };
 

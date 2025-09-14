@@ -16,6 +16,7 @@ import EditProduct from './components/Product/EditProduct';
 import SearchResults from './components/Search/SearchResults';
 import CitySearch from './components/Search/CitySearch';
 import MapView from './components/Map/MapView';
+import Home from './components/Home';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -42,11 +43,11 @@ const AppRoutes = () => {
       <Route path="/" element={<Layout />}>
         {/* Public routes for unauthenticated users */}
         {!isAuthenticated && <>
-          <Route index element={<MapView publicView={true} />} />
+          <Route index element={<Home />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           <Route path="city-search" element={<CitySearch />} />
-          <Route path="*" element={<MapView publicView={true} />} />
+          <Route path="*" element={<Home />} />
         </>}
         {/* Authenticated routes */}
         {isAuthenticated && <>

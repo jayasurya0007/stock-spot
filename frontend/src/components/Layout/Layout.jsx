@@ -1,15 +1,19 @@
+
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from './Navbar';
+import Container from '@mui/material/Container';
 
 const Layout = () => {
   return (
-    <div>
+    <>
       <Navbar />
-      <main>
-        <Outlet />
-      </main>
-    </div>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <main>
+          <Outlet />
+        </main>
+      </Container>
+    </>
   );
 };
 
