@@ -77,7 +77,7 @@ const addProduct = async (req, res) => {
 
 const updateProduct = async (req, res) => {
   const { product_id } = req.params;
-  const { name, price, quantity, description, category } = req.body;
+  const { name, price, quantity, description, category, enhanceDescription = false } = req.body;
 
   if (!product_id) {
     return res.status(400).json({ error: 'Product ID is required' });
@@ -102,6 +102,49 @@ const updateProduct = async (req, res) => {
       }
     }
     
+    // Get current product data for enhancement if needed
+    let currentProduct = {};
+    if (enhanceDescription || name !== undefined || description !== undefined || category !== undefined) {
+      const [currentRows] = await conn.execute('SELECT name, price, description, category FROM products WHERE id = ?', [product_id]);
+      if (currentRows.length > 0) {
+        currentProduct = currentRows[0];
+      }
+    }
+
+    // Enhance description and category if requested
+    let finalDescription = description;
+    let finalCategory = category;
+    let descriptionEnhancementInfo = null;
+    
+    if (enhanceDescription) {
+      console.log('🚀 Enhancing product description during update for product ID:', product_id);
+      
+      // Use new values if provided, otherwise use current values
+      const enhancementData = {
+        name: name !== undefined ? name : currentProduct.name,
+        price: price !== undefined ? price : currentProduct.price,
+        quantity: quantity !== undefined ? quantity : 1, // Use 1 as default since we don't include quantity in description
+        description: description !== undefined ? description : currentProduct.description,
+        category: category !== undefined ? category : currentProduct.category
+      };
+      
+      const enhancementResult = await enhanceProductDescription(enhancementData);
+      
+      finalDescription = enhancementResult.enhancedDescription;
+      finalCategory = enhancementResult.suggestedCategory || finalCategory;
+      descriptionEnhancementInfo = {
+        originalDescription: enhancementResult.originalDescription,
+        originalCategory: enhancementResult.originalCategory,
+        enhancedDescription: enhancementResult.enhancedDescription,
+        suggestedCategory: enhancementResult.suggestedCategory,
+        categoryGenerated: enhancementResult.categoryGenerated,
+        success: enhancementResult.success,
+        error: enhancementResult.error
+      };
+      
+      console.log('📝 Update enhancement result:', descriptionEnhancementInfo);
+    }
+
     // Build dynamic update query based on provided fields
     let query = 'UPDATE products SET ';
     const updates = [];
@@ -119,19 +162,19 @@ const updateProduct = async (req, res) => {
       updates.push('quantity = ?');
       values.push(quantity);
     }
-    if (description !== undefined) {
+    if (finalDescription !== undefined) {
       updates.push('description = ?');
-      values.push(description);
+      values.push(finalDescription);
     }
-    if (category !== undefined) {
+    if (finalCategory !== undefined) {
       updates.push('category = ?');
-      values.push(category);
+      values.push(finalCategory);
     }
     
     // Update embedding if name or description changed
-    if (name !== undefined || description !== undefined) {
-      const newName = name !== undefined ? name : (await conn.execute('SELECT name FROM products WHERE id = ?', [product_id]))[0][0].name;
-      const newDescription = description !== undefined ? description : (await conn.execute('SELECT description FROM products WHERE id = ?', [product_id]))[0][0].description;
+    if (name !== undefined || finalDescription !== undefined) {
+      const newName = name !== undefined ? name : currentProduct.name;
+      const newDescription = finalDescription !== undefined ? finalDescription : currentProduct.description;
       
       const embedding = await getEmbedding(newName + " " + (newDescription || ""));
       updates.push('embedding = ?');
@@ -149,7 +192,10 @@ const updateProduct = async (req, res) => {
     await conn.execute(query, values);
     conn.release();
     
-    res.json({ message: 'Product updated successfully' });
+    res.json({ 
+      message: 'Product updated successfully',
+      enhancement: descriptionEnhancementInfo 
+    });
   } catch (err) {
     console.error('Product update failed:', err);
     res.status(500).json({ error: 'Failed to update product', details: err.message });

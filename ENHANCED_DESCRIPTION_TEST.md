@@ -68,13 +68,24 @@ curl -X POST http://localhost:5000/api/product/add \
 ```
 
 ### Frontend Test:
+
+#### Adding New Product:
 1. Log in as a merchant
 2. Navigate to Add Product page
-3. Fill in basic product information
+3. Fill in basic product information (name, price, quantity)
 4. Click "✨ Enhance with AI" button
-5. Review the enhanced description
-6. Choose between original and enhanced description
+5. Review the enhanced description and suggested category
+6. Choose between original and AI-generated content
 7. Submit the form
+
+#### Updating Existing Product:
+1. Log in as a merchant
+2. Navigate to your product dashboard
+3. Click "Edit" on any existing product
+4. Modify product information as needed
+5. Click "✨ Enhance with AI" button to get new suggestions
+6. Choose between current and AI-generated content
+7. Update the product
 
 ## Expected Results
 
@@ -83,6 +94,7 @@ The AI should generate:
 - Essential product information only
 - Key features and primary use case
 - No fluff or marketing language - direct and informative
+- **No quantity mentions** (quantity can change frequently)
 
 ## Example Outputs
 
@@ -105,6 +117,11 @@ The AI should generate:
 **AI Output**: 
 - Description: "Non-slip yoga mat for exercise and meditation practice."
 - Category: "Sports & Fitness" (AI-generated)
+
+### Input: "Pencil", $10, Category: (empty)
+**AI Output**: 
+- Description: "Writing and drawing tool with graphite core. Suitable for writing, sketching, and note-taking."
+- Category: "Office Supplies" (AI-generated)
 
 ## Feature Benefits
 

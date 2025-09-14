@@ -28,11 +28,11 @@ export async function enhanceProductDescription(productData) {
         messages: [
           { 
             role: "system", 
-            content: `You are a concise product description writer for an e-commerce platform. Create SHORT, essential-only product descriptions and suggest appropriate categories. Keep descriptions to 1-2 sentences maximum. Focus ONLY on what the customer needs to know - no fluff or marketing language. Be direct and informative. ${needsCategory ? 'ALWAYS respond in JSON format with "description" and "category" fields.' : 'Return only the description text.'}`
+            content: `You are a concise product description writer for an e-commerce platform. Create SHORT, essential-only product descriptions and suggest appropriate categories. Keep descriptions to 1-2 sentences maximum. Focus ONLY on what the customer needs to know - no fluff or marketing language. Be direct and informative. NEVER include citations, references, footnotes, or bracketed numbers like [1], [4][5], etc. Write in plain text only. ${needsCategory ? 'ALWAYS respond in JSON format with "description" and "category" fields.' : 'Return only the description text.'}`
           },
           { 
             role: "user", 
-            content: `${taskDescription} based on this information:\n\n${contextInfo}\n\n${needsCategory ? 'IMPORTANT: Respond ONLY with valid JSON format:\n{"description": "your 1-2 sentence description", "category": "simple category name"}\n\nFor category, use simple categories like: Electronics, Clothing, Food, Books, Home & Garden, Sports, Toys, Beauty, Automotive, Office Supplies, Health, etc. Do not include extra text, explanations, or formatting - just the JSON object.' : 'Include only essential details: what it is, key feature/benefit, and primary use. Maximum 1-2 sentences. No promotional language.'}`
+            content: `${taskDescription} based on this information:\n\n${contextInfo}\n\n${needsCategory ? 'IMPORTANT: Respond ONLY with valid JSON format:\n{"description": "your 1-2 sentence description", "category": "simple category name"}\n\nFor category, use simple categories like: Electronics, Clothing, Food, Books, Home & Garden, Sports, Toys, Beauty, Automotive, Office Supplies, Health, etc. \n\nIMPORTANT: Do NOT include citations, references, footnotes, or numbers in brackets like [1], [4][5], etc. Use plain text only. Do not include extra text, explanations, or formatting - just the JSON object.' : 'Include only essential details: what it is, key feature/benefit, and primary use. Maximum 1-2 sentences. No promotional language. Do NOT include citations or references.'}`
           }
         ],
         max_tokens: 60,
@@ -94,10 +94,13 @@ export async function enhanceProductDescription(productData) {
         enhancedDescription = aiResponse;
       }
       
-      // Clean up the description (remove quotes and unwanted characters)
+      // Clean up the description (remove quotes, citations, and unwanted characters)
       const cleanedDescription = enhancedDescription
         .replace(/^["']|["']$/g, '') // Remove leading/trailing quotes
         .replace(/\\"/g, '"') // Unescape quotes
+        .replace(/\[\d+\]/g, '') // Remove citations like [1], [4], [5]
+        .replace(/\[[\d,\s]+\]/g, '') // Remove multiple citations like [4][5] or [1,2,3]
+        .replace(/\s+/g, ' ') // Normalize whitespace after removing citations
         .trim();
       
       // Clean up the category (remove quotes, unwanted characters, and validate)

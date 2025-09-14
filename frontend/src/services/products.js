@@ -26,6 +26,11 @@ export const productService = {
     return response.data;
   },
 
+  previewEnhancedDescriptionForUpdate: async (productData) => {
+    const response = await api.post('/product/preview-description', productData);
+    return response.data;
+  },
+
   deleteProduct: async (productId) => {
     const response = await api.delete(`/product/${productId}`);
     return response.data;
