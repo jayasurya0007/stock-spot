@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import SearchBar from './SearchBar';
 import { searchService } from '../../services/search';
 import LeafletMap from '../Map/LeafletMap';
-import { LoadingSpinner, SkeletonLoader } from '../Loading';
+import { LoadingSpinner } from '../Loading';
+import { MapPin, Navigation, ExternalLink, Building, X } from 'lucide-react';
 
 const SearchResults = () => {
   const navigate = useNavigate();
@@ -19,11 +20,11 @@ const SearchResults = () => {
 
   // Helper functions for match percentage display
   const getMatchColor = (percentage) => {
-    if (percentage >= 80) return '#28a745'; // Green for very high
-    if (percentage >= 60) return '#17a2b8'; // Blue for high  
-    if (percentage >= 40) return '#ffc107'; // Yellow for medium
-    if (percentage >= 20) return '#fd7e14'; // Orange for low
-    return '#dc3545'; // Red for very low
+    if (percentage >= 80) return 'bg-green-100 text-green-800 border-green-200';
+    if (percentage >= 60) return 'bg-blue-100 text-blue-800 border-blue-200';
+    if (percentage >= 40) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    if (percentage >= 20) return 'bg-orange-100 text-orange-800 border-orange-200';
+    return 'bg-red-100 text-red-800 border-red-200';
   };
 
   const getMatchLevelFromPercentage = (percentage) => {
@@ -48,7 +49,7 @@ const SearchResults = () => {
     try {
       setLoading(true);
       setError('');
-      setResults([]); // Clear previous results
+      setResults([]);
       setExactMatches([]);
       setRelatedProducts([]);
       
@@ -62,9 +63,16 @@ const SearchResults = () => {
       console.log('Exact matches:', exactResults);
       console.log('Related products:', relatedResults);
       
+      // Sort related products by match percentage in descending order
+      const sortedRelatedResults = [...relatedResults].sort((a, b) => {
+        const aMatch = a.match_percentage || (Math.max(0, (1 - a.similarity)) * 100);
+        const bMatch = b.match_percentage || (Math.max(0, (1 - b.similarity)) * 100);
+        return bMatch - aMatch;
+      });
+      
       setResults(searchResults);
       setExactMatches(exactResults);
-      setRelatedProducts(relatedResults);
+      setRelatedProducts(sortedRelatedResults);
       setSearchType(data.searchType);
       setLastQuery(searchData.query);
       
@@ -86,278 +94,221 @@ const SearchResults = () => {
   };
 
   return (
-    <div className="container" style={{ 
-      minHeight: '100vh',
-      height: 'auto',
-      padding: '20px',
-      backgroundColor: '#ffffff',
-      position: 'relative',
-      overflow: 'visible'
-    }}>
-      <h1>Product Search</h1>
-      
-      {/* Alternative Search Options */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        marginTop: '1rem', 
-        marginBottom: '1.5rem' 
-      }}>
-        <button 
-          onClick={() => navigate('/city-search')}
-          style={{
-            padding: '12px 24px',
-            backgroundColor: '#17a2b8',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
-          🏙️ Search using the city
-        </button>
-      </div>
-      
-      <SearchBar onSearch={handleSearch} />
-      
-      {loading && (
-        <div style={{ margin: '2rem 0' }}>
-          <LoadingSpinner size="large" color="primary" text="Searching for products..." centered />
-          <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-            <SkeletonLoader type="list" lines={3} />
-          </div>
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">Product Search</h1>
+        
+        {/* Alternative Search Options */}
+        <div className="flex justify-center mb-6">
+          <button 
+            onClick={() => navigate('/city-search')}
+            className="flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          >
+            <Building size={18} />
+            Search using the city
+          </button>
         </div>
-      )}
-      {error && <div className="error">{error}</div>}
-      
-      {!loading && !error && results.length === 0 && (
-        <div className="card" style={{ marginTop: '2rem', textAlign: 'center' }}>
-          <h3>Welcome to Product Search!</h3>
-          <p>Enter a product name, set your location, and click "Search Products" to find items near you.</p>
-          <div style={{ marginTop: '1rem' }}>
-            <h4>Search Tips:</h4>
-            <ul style={{ textAlign: 'left', display: 'inline-block' }}>
-              <li>Try searching for common items like "rice", "bread", or "milk"</li>
-              <li>Use the "Use Current Location" button for accurate results</li>
-              <li>Increase the search radius if no results are found</li>
-              <li>Check that there are merchants with products in your area</li>
-            </ul>
+        
+        <SearchBar onSearch={handleSearch} />
+        
+        {loading && (
+          <div className="bg-white rounded-xl shadow-md p-6 text-center">
+            <LoadingSpinner size="large" text="Searching for products..." />
           </div>
-        </div>
-      )}
-      
-      {(exactMatches.length > 0 || relatedProducts.length > 0) && (
-        <>
-          {/* Debug info */}
-          <div style={{ padding: '10px', backgroundColor: '#e7f3ff', margin: '10px 0', borderRadius: '4px' }}>
-            <strong>Debug:</strong> Found {exactMatches.length} exact matches, {relatedProducts.length} related products
+        )}
+        
+        {error && (
+          <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6">
+            {error}
           </div>
-          
-          {/* Scrollable Results Container */}
-          <div className="search-results-container" style={{ 
-            maxHeight: '70vh', 
-            overflowY: 'scroll',
-            border: '2px solid #007bff',
-            backgroundColor: '#ffffff'
-          }}>
+        )}
+        
+        {!loading && !error && results.length === 0 && (
+          <div className="bg-white rounded-xl shadow-md p-6 text-center">
+            <h3 className="text-xl font-bold text-gray-900 mb-3">Welcome to Product Search!</h3>
+            <p className="text-gray-600 mb-4">Enter a product name, set your location, and click "Search Products" to find items near you.</p>
+            <div className="text-left max-w-md mx-auto">
+              <h4 className="font-medium text-gray-900 mb-2">Search Tips:</h4>
+              <ul className="list-disc list-inside text-gray-600 space-y-1">
+                <li>Try searching for common items like "rice", "bread", or "milk"</li>
+                <li>Use the "Use Current Location" button for accurate results</li>
+                <li>Increase the search radius if no results are found</li>
+                <li>Check that there are merchants with products in your area</li>
+              </ul>
+            </div>
+          </div>
+        )}
+        
+        {(exactMatches.length > 0 || relatedProducts.length > 0) && (
+          <>
+            {/* Results Summary */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <p className="text-blue-800 font-medium">
+                Found {exactMatches.length} exact matches and {relatedProducts.length} related products for "{lastQuery}"
+              </p>
+            </div>
             
-            {/* Exact Matches Section */}
-            {exactMatches.length > 0 && (
-              <div style={{ marginBottom: '2rem' }}>
-                <h2 style={{ 
-                  color: '#2c3e50', 
-                  borderBottom: '3px solid #28a745', 
-                  paddingBottom: '8px',
-                  margin: '20px 0 15px 0',
-                  fontSize: '1.5rem'
-                }}>
-                  🎯 Exact Matches ({exactMatches.length})
-                </h2>
-                
-                {exactMatches.map((product, index) => (
-                  <div key={`exact-${product.id || index}`} style={{
-                    border: '2px solid #28a745',
-                    borderRadius: '8px',
-                    padding: '20px',
-                    margin: '15px 0',
-                    backgroundColor: '#f8fff9',
-                    minHeight: '150px',
-                    boxShadow: '0 2px 4px rgba(40, 167, 69, 0.1)'
-                  }}>
-                    <h3 style={{ color: '#2c3e50', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ 
-                        backgroundColor: '#28a745', 
-                        color: 'white', 
-                        borderRadius: '50%', 
-                        width: '24px', 
-                        height: '24px', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        fontSize: '12px' 
-                      }}>
-                        {index + 1}
-                      </span>
-                      {product.name}
-                    </h3>
-                    <p><strong>Price:</strong> ${product.price}</p>
-                    <p><strong>Quantity:</strong> {product.quantity}</p>
-                    <p><strong>Merchant:</strong> {product.shop_name}</p>
-                    <p><strong>Distance:</strong> {(product.distance / 1000).toFixed(2)} km</p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                      <strong>Match:</strong> 
-                      <span style={{
-                        backgroundColor: '#28a745',
-                        color: 'white',
-                        padding: '4px 8px',
-                        borderRadius: '12px',
-                        fontSize: '12px',
-                        fontWeight: 'bold'
-                      }}>
-                        {product.match_percentage || 100}%
-                      </span>
-                      <span style={{ fontSize: '12px', color: '#666' }}>
-                        (exact match)
-                      </span>
-                    </div>
-                    {product.description && <p><strong>Description:</strong> {product.description}</p>}
-                    <button 
-                      onClick={() => setMapMerchant(product)}
-                      style={{
-                        padding: '10px 16px',
-                        backgroundColor: '#28a745',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontWeight: 'bold'
-                      }}
-                    >
-                      📍 View Location
-                    </button>
+            {/* Scrollable Results Container */}
+            <div className="bg-white rounded-xl shadow-md overflow-hidden">
+              {/* Exact Matches Section */}
+              {exactMatches.length > 0 && (
+                <div className="p-6 border-b border-gray-200">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <span className="bg-green-500 text-white p-1 rounded">🎯</span>
+                    Exact Matches ({exactMatches.length})
+                  </h2>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {exactMatches.map((product, index) => (
+                      <div key={`exact-${product.id || index}`} className="border-2 border-green-300 rounded-lg p-4 bg-green-50">
+                        <div className="flex justify-between items-start mb-3">
+                          <span className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                            {index + 1}
+                          </span>
+                          <span className="bg-green-200 text-green-800 px-2 py-1 rounded-full text-xs font-bold">
+                            100% Match
+                          </span>
+                        </div>
+                        
+                        <h3 className="font-bold text-gray-900 mb-2">{product.name}</h3>
+                        
+                        <div className="space-y-1 text-sm mb-3">
+                          <p><span className="font-medium">Price:</span> ${product.price}</p>
+                          <p><span className="font-medium">Quantity:</span> {product.quantity}</p>
+                          <p><span className="font-medium">Merchant:</span> {product.shop_name}</p>
+                          <p><span className="font-medium">Distance:</span> {(product.distance / 1000).toFixed(2)} km</p>
+                        </div>
+                        
+                        {product.description && (
+                          <p className="text-sm text-gray-600 mb-3">
+                            <span className="font-medium">Description:</span> {product.description}
+                          </p>
+                        )}
+                        
+                        <button 
+                          onClick={() => setMapMerchant(product)}
+                          className="w-full flex items-center justify-center gap-1 bg-green-600 text-white py-2 rounded-lg font-medium hover:bg-green-700 transition-colors text-sm"
+                        >
+                          <MapPin size={14} />
+                          View Location
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
+              )}
 
-            {/* Related Products Section */}
-            {relatedProducts.length > 0 && (
-              <div>
-                <h2 style={{ 
-                  color: '#2c3e50', 
-                  borderBottom: '3px solid #17a2b8', 
-                  paddingBottom: '8px',
-                  margin: '20px 0 15px 0',
-                  fontSize: '1.3rem'
-                }}>
-                  🔍 Related Products ({relatedProducts.length})
-                </h2>
-                
-                {relatedProducts.map((product, index) => (
-                  <div key={`related-${product.id || index}`} style={{
-                    border: '1px solid #17a2b8',
-                    borderRadius: '8px',
-                    padding: '18px',
-                    margin: '12px 0',
-                    backgroundColor: '#f8fdff',
-                    minHeight: '140px',
-                    boxShadow: '0 1px 3px rgba(23, 162, 184, 0.1)'
-                  }}>
-                    <h3 style={{ color: '#2c3e50', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ 
-                        backgroundColor: '#17a2b8', 
-                        color: 'white', 
-                        borderRadius: '50%', 
-                        width: '22px', 
-                        height: '22px', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        fontSize: '11px' 
-                      }}>
-                        {index + 1}
-                      </span>
-                      {product.name}
-                    </h3>
-                    <p><strong>Price:</strong> ${product.price}</p>
-                    <p><strong>Quantity:</strong> {product.quantity}</p>
-                    <p><strong>Merchant:</strong> {product.shop_name}</p>
-                    <p><strong>Distance:</strong> {(product.distance / 1000).toFixed(2)} km</p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                      <strong>Match:</strong> 
-                      <span style={{
-                        backgroundColor: getMatchColor(product.match_percentage || (Math.max(0, (1 - product.similarity)) * 100)),
-                        color: 'white',
-                        padding: '4px 8px',
-                        borderRadius: '12px',
-                        fontSize: '12px',
-                        fontWeight: 'bold'
-                      }}>
-                        {(product.match_percentage || (Math.max(0, (1 - product.similarity)) * 100)).toFixed(1)}%
-                      </span>
-                      <span style={{ fontSize: '12px', color: '#666' }}>
-                        ({product.match_level || getMatchLevelFromPercentage(product.match_percentage || (Math.max(0, (1 - product.similarity)) * 100))})
-                      </span>
-                    </div>
-                    {product.description && <p><strong>Description:</strong> {product.description}</p>}
-                    <button 
-                      onClick={() => setMapMerchant(product)}
-                      style={{
-                        padding: '8px 14px',
-                        backgroundColor: '#17a2b8',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      📍 View Location
-                    </button>
+              {/* Related Products Section */}
+              {relatedProducts.length > 0 && (
+                <div className="p-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <span className="bg-blue-500 text-white p-1 rounded">🔍</span>
+                    Related Products ({relatedProducts.length})
+                  </h2>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {relatedProducts.map((product, index) => {
+                      const matchPercentage = product.match_percentage || (Math.max(0, (1 - product.similarity)) * 100);
+                      const matchLevel = product.match_level || getMatchLevelFromPercentage(matchPercentage);
+                      const matchColorClass = getMatchColor(matchPercentage);
+                      
+                      return (
+                        <div key={`related-${product.id || index}`} className="border border-blue-200 rounded-lg p-4 bg-blue-50">
+                          <div className="flex justify-between items-start mb-3">
+                            <span className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                              {index + 1}
+                            </span>
+                            <span className={`px-2 py-1 rounded-full text-xs font-bold border ${matchColorClass}`}>
+                              {matchPercentage.toFixed(1)}% Match
+                            </span>
+                          </div>
+                          
+                          <h3 className="font-bold text-gray-900 mb-2">{product.name}</h3>
+                          
+                          <div className="space-y-1 text-sm mb-3">
+                            <p><span className="font-medium">Price:</span> ${product.price}</p>
+                            <p><span className="font-medium">Quantity:</span> {product.quantity}</p>
+                            <p><span className="font-medium">Merchant:</span> {product.shop_name}</p>
+                            <p><span className="font-medium">Distance:</span> {(product.distance / 1000).toFixed(2)} km</p>
+                          </div>
+                          
+                          {product.description && (
+                            <p className="text-sm text-gray-600 mb-3">
+                              <span className="font-medium">Description:</span> {product.description}
+                            </p>
+                          )}
+                          
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={() => setMapMerchant(product)}
+                              className="flex-1 flex items-center justify-center gap-1 bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm"
+                            >
+                              <MapPin size={14} />
+                              View Location
+                            </button>
+                          </div>
+                          
+                          <div className="mt-2 text-xs text-gray-500 text-center">
+                            {matchLevel.replace('_', ' ')} similarity
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+        
+        {/* Modal for Merchant Location using Leaflet */}
+        {mapMerchant && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl p-6 max-w-md w-full">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-bold text-gray-900">{mapMerchant.shop_name} Location</h3>
+                <button 
+                  onClick={() => setMapMerchant(null)}
+                  className="text-gray-500 hover:text-gray-700 p-1"
+                >
+                  <X size={20} />
+                </button>
               </div>
-            )}
-            
-            {/* Add some padding at the bottom */}
-            <div style={{ height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
-              ⬆️ Scroll up to see more results
+              
+              <div className="h-64 mb-4 rounded-lg overflow-hidden">
+                <LeafletMap
+                  center={[mapMerchant.latitude, mapMerchant.longitude]}
+                  markers={[{
+                    position: [mapMerchant.latitude, mapMerchant.longitude],
+                    popup: `<b>${mapMerchant.shop_name}</b><br>${mapMerchant.name || ''}`
+                  }]}
+                  key={mapMerchant.id || mapMerchant.shop_name}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 gap-2">
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${mapMerchant.latitude},${mapMerchant.longitude}${userLocation.lat && userLocation.lng ? `&origin=${userLocation.lat},${userLocation.lng}` : ''}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                >
+                  <Navigation size={16} />
+                  Get Directions (Google Maps)
+                  <ExternalLink size={14} />
+                </a>
+                
+                <button 
+                  onClick={() => setMapMerchant(null)}
+                  className="w-full flex items-center justify-center gap-2 bg-gray-200 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
-        </>
-      )}
-      {/* Modal for Merchant Location using Leaflet */}
-      {mapMerchant && (
-        <div className="modal" style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ background: '#fff', padding: 20, borderRadius: 8, minWidth: 350, minHeight: 350, position: 'relative' }}>
-            <button style={{ position: 'absolute', top: 10, right: 10 }} onClick={() => setMapMerchant(null)}>Close</button>
-            <h3>{mapMerchant.shop_name} Location</h3>
-            <LeafletMap
-              center={[mapMerchant.latitude, mapMerchant.longitude]}
-              markers={[{
-                position: [mapMerchant.latitude, mapMerchant.longitude],
-                popup: `<b>${mapMerchant.shop_name}</b>`
-              }]}
-              key={mapMerchant.id || mapMerchant.shop_name}
-            />
-            <div style={{ marginTop: 16, textAlign: 'center' }}>
-              <a
-                href={`https://www.google.com/maps/dir/?api=1&destination=${mapMerchant.latitude},${mapMerchant.longitude}${userLocation.lat && userLocation.lng ? `&origin=${userLocation.lat},${userLocation.lng}` : ''}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-primary"
-                style={{ display: 'inline-block', marginTop: 8 }}
-              >
-                Get Directions (Google Maps)
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

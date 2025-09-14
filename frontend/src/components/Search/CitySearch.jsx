@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { searchService } from '../../services/search';
 import LeafletMap from '../Map/LeafletMap';
+import { LoadingSpinner } from '../Loading';
+import { ArrowLeft, MapPin, Navigation, ExternalLink, Building, X, Search, Locate } from 'lucide-react';
 
 const CitySearch = () => {
   const navigate = useNavigate();
@@ -11,13 +13,14 @@ const CitySearch = () => {
   const [error, setError] = useState('');
   const [selectedMerchant, setSelectedMerchant] = useState(null);
   const [userLocation, setUserLocation] = useState({ lat: null, lng: null });
-  const [searchMethod, setSearchMethod] = useState('city'); // 'city' or 'location'
+  const [searchMethod, setSearchMethod] = useState('city');
 
   // Get user location
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => console.log('Location access denied or unavailable')
       );
     }
   }, []);
@@ -35,8 +38,6 @@ const CitySearch = () => {
       setMerchants([]);
       
       const data = await searchService.searchMerchantsByCity(cityName);
-      console.log('City search response:', data);
-      
       const merchantResults = data.merchants || [];
       setMerchants(merchantResults);
       
@@ -64,8 +65,6 @@ const CitySearch = () => {
       setMerchants([]);
       
       const data = await searchService.searchMerchantsByLocation(userLocation.lat, userLocation.lng);
-      console.log('Location search response:', data);
-      
       const merchantResults = data.merchants || [];
       setMerchants(merchantResults);
       
@@ -97,232 +96,217 @@ const CitySearch = () => {
   };
 
   return (
-    <div className="container" style={{ 
-      minHeight: '100vh',
-      height: 'auto',
-      padding: '20px',
-      backgroundColor: '#ffffff',
-      position: 'relative',
-      overflow: 'visible'
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '2rem' }}>
-        <button 
-          onClick={() => navigate('/search')}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#6c757d',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            marginRight: '1rem'
-          }}
-        >
-          ← Back to Product Search
-        </button>
-        <h1 style={{ margin: 0 }}>Search Merchants by City</h1>
-      </div>
-
-      {/* Search Method Toggle */}
-      <div className="card" style={{ marginBottom: '2rem' }}>
-        <h3>Choose Search Method:</h3>
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <input
-              type="radio"
-              value="city"
-              checked={searchMethod === 'city'}
-              onChange={(e) => setSearchMethod(e.target.value)}
-            />
-            Search by City Name
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <input
-              type="radio"
-              value="location"
-              checked={searchMethod === 'location'}
-              onChange={(e) => setSearchMethod(e.target.value)}
-            />
-            Use Current Location
-          </label>
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center mb-6">
+          <button 
+            onClick={() => navigate('/search')}
+            className="flex items-center gap-2 text-blue-600 hover:text-blue-800 mr-4"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <h1 className="text-3xl font-bold text-gray-900">Search Merchants</h1>
         </div>
 
-        {searchMethod === 'city' ? (
-          <form onSubmit={handleCitySearch}>
-            <div className="form-group">
-              <label htmlFor="cityName" className="form-label">City Name</label>
+        {/* Search Method Toggle */}
+        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Choose Search Method:</h3>
+          <div className="flex flex-col sm:flex-row gap-4 mb-4">
+            <label className="flex items-center gap-2 p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors flex-1">
               <input
-                type="text"
-                id="cityName"
-                className="form-input"
-                value={cityName}
-                onChange={(e) => setCityName(e.target.value)}
-                placeholder="e.g., New York, London, Tokyo"
-                style={{ marginBottom: '1rem' }}
+                type="radio"
+                value="city"
+                checked={searchMethod === 'city'}
+                onChange={(e) => setSearchMethod(e.target.value)}
+                className="text-blue-600 focus:ring-blue-500"
               />
+              <Building size={18} />
+              <span>Search by City Name</span>
+            </label>
+            <label className="flex items-center gap-2 p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors flex-1">
+              <input
+                type="radio"
+                value="location"
+                checked={searchMethod === 'location'}
+                onChange={(e) => setSearchMethod(e.target.value)}
+                className="text-blue-600 focus:ring-blue-500"
+              />
+              <Locate size={18} />
+              <span>Use Current Location</span>
+            </label>
+          </div>
+
+          {searchMethod === 'city' ? (
+            <form onSubmit={handleCitySearch} className="space-y-4">
+              <div>
+                <label htmlFor="cityName" className="block text-sm font-medium text-gray-700 mb-1">
+                  City Name *
+                </label>
+                <input
+                  type="text"
+                  id="cityName"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                  value={cityName}
+                  onChange={(e) => setCityName(e.target.value)}
+                  placeholder="e.g., New York, London, Tokyo"
+                />
+              </div>
+              <button 
+                type="submit" 
+                className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-all duration-300 shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+                disabled={loading}
+              >
+                {loading ? (
+                  <LoadingSpinner size="small" color="white" />
+                ) : (
+                  <Search size={18} />
+                )}
+                {loading ? 'Searching...' : 'Search Merchants'}
+              </button>
+            </form>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-gray-600">
+                {userLocation.lat && userLocation.lng 
+                  ? `Current location detected: ${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)}` 
+                  : 'Getting your location...'
+                }
+              </p>
+              <button 
+                onClick={handleLocationSearch}
+                className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-all duration-300 shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+                disabled={loading || (!userLocation.lat || !userLocation.lng)}
+              >
+                {loading ? (
+                  <LoadingSpinner size="small" color="white" />
+                ) : (
+                  <Locate size={18} />
+                )}
+                {loading ? 'Searching...' : 'Find Nearby Merchants'}
+              </button>
             </div>
-            <button 
-              type="submit" 
-              className="btn btn-primary"
-              disabled={loading}
-            >
-              {loading ? 'Searching...' : '🔍 Search Merchants'}
-            </button>
-          </form>
-        ) : (
-          <div>
-            <p>
-              {userLocation.lat && userLocation.lng 
-                ? `Current location detected: ${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)}` 
-                : 'Getting your location...'
-              }
-            </p>
-            <button 
-              onClick={handleLocationSearch}
-              className="btn btn-primary"
-              disabled={loading || (!userLocation.lat || !userLocation.lng)}
-            >
-              {loading ? 'Searching...' : '📍 Find Nearby Merchants'}
-            </button>
+          )}
+        </div>
+
+        {error && (
+          <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6">
+            {error}
           </div>
         )}
-      </div>
 
-      {error && <div className="error" style={{ marginBottom: '2rem' }}>{error}</div>}
-
-      {merchants.length > 0 && (
-        <div className="card">
-          <h2>Found {merchants.length} Merchants</h2>
-          <div style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
-            {merchants.map((merchant) => (
-              <div 
-                key={merchant.id} 
-                onClick={() => handleMerchantClick(merchant)}
-                style={{
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  padding: '20px',
-                  backgroundColor: '#f9f9f9',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = '#e9ecef'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = '#f9f9f9'}
-              >
-                <h3 style={{ color: '#2c3e50', marginBottom: '8px' }}>
-                  🏪 {merchant.shop_name}
-                </h3>
-                <p><strong>Owner:</strong> {merchant.owner_name || 'N/A'}</p>
-                <p><strong>Address:</strong> {merchant.address || 'N/A'}</p>
-                <p><strong>Phone:</strong> {merchant.phone || 'N/A'}</p>
-                <p><strong>Products Available:</strong> {merchant.product_count || 0}</p>
-                {merchant.distance && (
-                  <p><strong>Distance:</strong> {(merchant.distance / 1000).toFixed(2)} km away</p>
-                )}
-                <p style={{ color: '#007bff', fontWeight: 'bold' }}>
-                  Click to view products and location →
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Merchant Details Modal */}
-      {selectedMerchant && (
-        <div className="modal" style={{ 
-          position: 'fixed', 
-          top: 0, 
-          left: 0, 
-          width: '100vw', 
-          height: '100vh', 
-          background: 'rgba(0,0,0,0.5)', 
-          zIndex: 1000, 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center' 
-        }}>
-          <div style={{ 
-            background: '#fff', 
-            padding: 20, 
-            borderRadius: 8, 
-            minWidth: '80vw', 
-            maxWidth: '90vw',
-            minHeight: '80vh',
-            maxHeight: '90vh',
-            overflow: 'auto',
-            position: 'relative' 
-          }}>
-            <button 
-              style={{ position: 'absolute', top: 10, right: 10, fontSize: '20px' }} 
-              onClick={() => setSelectedMerchant(null)}
-            >
-              ✕
-            </button>
-            
-            <h2>{selectedMerchant.shop_name}</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginTop: '1rem' }}>
-              
-              {/* Merchant Info */}
-              <div>
-                <h3>Merchant Information</h3>
-                <p><strong>Owner:</strong> {selectedMerchant.owner_name || 'N/A'}</p>
-                <p><strong>Address:</strong> {selectedMerchant.address || 'N/A'}</p>
-                <p><strong>Phone:</strong> {selectedMerchant.phone || 'N/A'}</p>
-                
-                <h3 style={{ marginTop: '2rem' }}>Available Products ({selectedMerchant.products?.length || 0})</h3>
-                {selectedMerchant.products && selectedMerchant.products.length > 0 ? (
-                  <div style={{ maxHeight: '300px', overflow: 'auto' }}>
-                    {selectedMerchant.products.map((product, index) => (
-                      <div key={index} style={{
-                        border: '1px solid #eee',
-                        borderRadius: '4px',
-                        padding: '10px',
-                        margin: '5px 0',
-                        backgroundColor: '#f8f9fa'
-                      }}>
-                        <h4 style={{ margin: '0 0 5px 0' }}>{product.name}</h4>
-                        <p style={{ margin: '2px 0' }}><strong>Price:</strong> ${product.price}</p>
-                        <p style={{ margin: '2px 0' }}><strong>Quantity:</strong> {product.quantity}</p>
-                        {product.description && (
-                          <p style={{ margin: '2px 0', fontSize: '0.9em', color: '#666' }}>
-                            {product.description}
-                          </p>
-                        )}
-                      </div>
-                    ))}
+        {merchants.length > 0 && (
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              Found {merchants.length} Merchants
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {merchants.map((merchant) => (
+                <div 
+                  key={merchant.id} 
+                  onClick={() => handleMerchantClick(merchant)}
+                  className="border border-gray-200 rounded-lg p-4 bg-white hover:bg-gray-50 transition-colors cursor-pointer shadow-sm"
+                >
+                  <h3 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
+                    <Building size={18} className="text-blue-600" />
+                    {merchant.shop_name}
+                  </h3>
+                  <div className="space-y-1 text-sm text-gray-600">
+                    <p><span className="font-medium">Owner:</span> {merchant.owner_name || 'N/A'}</p>
+                    <p><span className="font-medium">Address:</span> {merchant.address || 'N/A'}</p>
+                    <p><span className="font-medium">Phone:</span> {merchant.phone || 'N/A'}</p>
+                    <p><span className="font-medium">Products Available:</span> {merchant.product_count || 0}</p>
+                    {merchant.distance && (
+                      <p><span className="font-medium">Distance:</span> {(merchant.distance / 1000).toFixed(2)} km away</p>
+                    )}
                   </div>
-                ) : (
-                  <p>No products available</p>
-                )}
-              </div>
+                  <div className="mt-3 text-blue-600 font-medium flex items-center gap-1">
+                    <span>View products and location</span>
+                    <MapPin size={14} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
-              {/* Map */}
-              <div>
-                <h3>Location</h3>
-                <LeafletMap
-                  center={[selectedMerchant.latitude, selectedMerchant.longitude]}
-                  markers={[{
-                    position: [selectedMerchant.latitude, selectedMerchant.longitude],
-                    popup: `<b>${selectedMerchant.shop_name}</b><br/>${selectedMerchant.address || ''}`
-                  }]}
-                  key={selectedMerchant.id}
-                />
-                <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+        {/* Merchant Details Modal */}
+        {selectedMerchant && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-900">{selectedMerchant.shop_name}</h2>
+                <button 
+                  onClick={() => setSelectedMerchant(null)}
+                  className="text-gray-500 hover:text-gray-700 p-1"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Merchant Info */}
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">Merchant Information</h3>
+                  <div className="space-y-2 text-sm">
+                    <p><span className="font-medium">Owner:</span> {selectedMerchant.owner_name || 'N/A'}</p>
+                    <p><span className="font-medium">Address:</span> {selectedMerchant.address || 'N/A'}</p>
+                    <p><span className="font-medium">Phone:</span> {selectedMerchant.phone || 'N/A'}</p>
+                  </div>
+                  
+                  <h3 className="text-lg font-medium text-gray-900 mt-6 mb-3">
+                    Available Products ({selectedMerchant.products?.length || 0})
+                  </h3>
+                  {selectedMerchant.products && selectedMerchant.products.length > 0 ? (
+                    <div className="space-y-3 max-h-60 overflow-auto">
+                      {selectedMerchant.products.map((product, index) => (
+                        <div key={index} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                          <h4 className="font-medium text-gray-900 mb-1">{product.name}</h4>
+                          <div className="flex justify-between text-sm">
+                            <span><strong>Price:</strong> ${product.price}</span>
+                            <span><strong>Quantity:</strong> {product.quantity}</span>
+                          </div>
+                          {product.description && (
+                            <p className="text-sm text-gray-600 mt-1">
+                              {product.description}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500">No products available</p>
+                  )}
+                </div>
+
+                {/* Map */}
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">Location</h3>
+                  <div className="h-64 rounded-lg overflow-hidden mb-4">
+                    <LeafletMap
+                      center={[selectedMerchant.latitude, selectedMerchant.longitude]}
+                      markers={[{
+                        position: [selectedMerchant.latitude, selectedMerchant.longitude],
+                        popup: `<b>${selectedMerchant.shop_name}</b><br/>${selectedMerchant.address || ''}`
+                      }]}
+                      key={selectedMerchant.id}
+                    />
+                  </div>
                   <a
                     href={`https://www.google.com/maps/dir/?api=1&destination=${selectedMerchant.latitude},${selectedMerchant.longitude}${userLocation.lat && userLocation.lng ? `&origin=${userLocation.lat},${userLocation.lng}` : ''}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn btn-primary"
+                    className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                   >
+                    <Navigation size={16} />
                     Get Directions (Google Maps)
+                    <ExternalLink size={14} />
                   </a>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
