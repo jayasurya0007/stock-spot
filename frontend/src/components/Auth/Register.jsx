@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { LoadingSpinner } from '../Loading';
+import { UserPlus } from 'lucide-react';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -102,88 +103,129 @@ const Register = () => {
   };
 
   return (
-    <div className="container">
-      <div className="form-container">
-        <h2 className="form-title">Create Account</h2>
-        {error && <div className="error">{error}</div>}
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="email" className="form-label">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              className="form-input"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+        <div className="px-8 py-6">
+          <div className="text-center mb-8">
+            <div className="bg-blue-100 w-16 h-16 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <UserPlus size={32} className="text-blue-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">Create Account</h2>
+            <p className="text-gray-600 mt-2">Join StockSpot to discover local stores and products</p>
           </div>
-          <div className="form-group">
-            <label htmlFor="password" className="form-label">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              className="form-input"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              className="form-input"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="role" className="form-label">Role</label>
-            <select
-              id="role"
-              name="role"
-              className="form-input"
-              value={formData.role}
-              onChange={handleChange}
-            >
-              <option value="user">User</option>
-              <option value="merchant">Merchant</option>
-              <option value="admin">Admin</option>
-            </select>
-            {formData.role === 'merchant' && (
-              <>
-                {(locationStatus || locationLoading) && (
-                  <div className="text-xs text-blue-600 mt-2" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    {locationLoading && <LoadingSpinner size="small" color="primary" />}
-                    {locationStatus}
+          
+          {error && (
+            <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-6 text-sm">
+              {error}
+            </div>
+          )}
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                  Confirm Password
+                </label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+                Role
+              </label>
+              <select
+                id="role"
+                name="role"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                value={formData.role}
+                onChange={handleChange}
+              >
+                <option value="user">User</option>
+                <option value="merchant">Merchant</option>
+                <option value="admin">Admin</option>
+              </select>
+              
+              {formData.role === 'merchant' && (
+                <div className="mt-4 space-y-4">
+                  {(locationStatus || locationLoading) && (
+                    <div className="text-sm text-blue-600 flex items-center">
+                      {locationLoading && <LoadingSpinner size="small" color="primary" className="mr-2" />}
+                      {locationStatus}
+                    </div>
+                  )}
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Latitude
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        placeholder="Latitude"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                        value={formData.latitude}
+                        onChange={e => setFormData(f => ({ ...f, latitude: e.target.value }))}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Longitude
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        placeholder="Longitude"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                        value={formData.longitude}
+                        onChange={e => setFormData(f => ({ ...f, longitude: e.target.value }))}
+                      />
+                    </div>
                   </div>
-                )}
-                <div className="flex gap-2 mt-2">
-                  <input
-                    type="number"
-                    step="any"
-                    placeholder="Latitude"
-                    className="form-input"
-                    value={formData.latitude}
-                    onChange={e => setFormData(f => ({ ...f, latitude: e.target.value }))}
-                  />
-                  <input
-                    type="number"
-                    step="any"
-                    placeholder="Longitude"
-                    className="form-input"
-                    value={formData.longitude}
-                    onChange={e => setFormData(f => ({ ...f, longitude: e.target.value }))}
-                  />
+                  
                   <button
                     type="button"
-                    className="btn btn-secondary"
+                    className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-all"
                     onClick={() => {
                       if (navigator.geolocation) {
                         setLocationStatus('Getting your location...');
@@ -201,86 +243,100 @@ const Register = () => {
                   >
                     Use My Current Location
                   </button>
+                  
+                  {/* Merchant Information Fields */}
+                  <div className="pt-4 mt-4 border-t">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Shop Information</h3>
+                    
+                    <div className="mb-4">
+                      <label htmlFor="shop_name" className="block text-sm font-medium text-gray-700 mb-1">
+                        Shop Name *
+                      </label>
+                      <input
+                        type="text"
+                        id="shop_name"
+                        name="shop_name"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                        value={formData.shop_name}
+                        onChange={handleChange}
+                        placeholder="Enter your shop name"
+                        required
+                      />
+                    </div>
+                    
+                    <div className="mb-4">
+                      <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                        Shop Address
+                      </label>
+                      <textarea
+                        id="address"
+                        name="address"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                        value={formData.address}
+                        onChange={handleChange}
+                        placeholder="Enter your shop address"
+                        rows="2"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="owner_name" className="block text-sm font-medium text-gray-700 mb-1">
+                          Owner Name
+                        </label>
+                        <input
+                          type="text"
+                          id="owner_name"
+                          name="owner_name"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                          value={formData.owner_name}
+                          onChange={handleChange}
+                          placeholder="Enter owner's name"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                          Phone Number
+                        </label>
+                        <input
+                          type="tel"
+                          id="phone"
+                          name="phone"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                          value={formData.phone}
+                          onChange={handleChange}
+                          placeholder="Enter phone number"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                
-                {/* Merchant Information Fields */}
-                <div className="mt-4 border-t pt-4">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Shop Information</h3>
-                  
-                  <div className="form-group">
-                    <label htmlFor="shop_name" className="form-label">Shop Name *</label>
-                    <input
-                      type="text"
-                      id="shop_name"
-                      name="shop_name"
-                      className="form-input"
-                      value={formData.shop_name}
-                      onChange={handleChange}
-                      placeholder="Enter your shop name"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="address" className="form-label">Shop Address</label>
-                    <textarea
-                      id="address"
-                      name="address"
-                      className="form-input"
-                      value={formData.address}
-                      onChange={handleChange}
-                      placeholder="Enter your shop address"
-                      rows="2"
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="owner_name" className="form-label">Owner Name</label>
-                    <input
-                      type="text"
-                      id="owner_name"
-                      name="owner_name"
-                      className="form-input"
-                      value={formData.owner_name}
-                      onChange={handleChange}
-                      placeholder="Enter owner's name"
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="phone" className="form-label">Phone Number</label>
-                    <input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      className="form-input"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      placeholder="Enter phone number"
-                    />
-                  </div>
-                </div>
-              </>
-            )}
+              )}
+            </div>
+            
+            <button 
+              type="submit" 
+              className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-all duration-300 shadow-md flex items-center justify-center"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <LoadingSpinner size="small" color="white" />
+                  <span className="ml-2">Creating Account...</span>
+                </>
+              ) : (
+                'Create Account'
+              )}
+            </button>
+          </form>
+          
+          <div className="mt-6 text-center text-sm text-gray-600">
+            Already have an account?{' '}
+            <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+              Login here
+            </Link>
           </div>
-          <button 
-            type="submit" 
-            className="btn btn-primary btn-block"
-            disabled={loading}
-            style={{ 
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem'
-            }}
-          >
-            {loading && <LoadingSpinner size="small" color="white" />}
-            {loading ? 'Creating Account...' : 'Create Account'}
-          </button>
-        </form>
-        <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-          Already have an account? <Link to="/login">Login here</Link>
         </div>
       </div>
     </div>
