@@ -328,5 +328,107 @@ const previewEnhancedDescription = async (req, res) => {
   }
 };
 
-export { addProduct, updateProduct, getMyProducts, deleteProduct, getProduct, previewEnhancedDescription };
-console.log("Exports in productController.js:", { addProduct, updateProduct, getMyProducts, deleteProduct, getProduct, previewEnhancedDescription });
+const getRelatedProducts = async (req, res) => {
+  const { product_id } = req.params;
+  const { limit = 20 } = req.query;
+
+  if (!product_id) {
+    return res.status(400).json({ error: 'Product ID is required' });
+  }
+
+  try {
+    const conn = await pool.getConnection();
+    
+    // First get the target product to use for similarity calculation
+    const [targetProducts] = await conn.execute(
+      'SELECT name, description, category, embedding FROM products WHERE id = ?',
+      [product_id]
+    );
+
+    if (!targetProducts.length) {
+      conn.release();
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    const targetProduct = targetProducts[0];
+    const targetEmbedding = targetProduct.embedding;
+
+    // Find related products using vector similarity, excluding the target product
+    // Convert cosine distance to similarity percentage (1 - distance) * 100
+    const [relatedProducts] = await conn.execute(
+      `SELECT
+         p.id,
+         p.name,
+         p.price,
+         p.quantity,
+         p.description,
+         p.category,
+         p.created_at,
+         m.id as merchant_id,
+         m.shop_name,
+         m.address,
+         m.phone,
+         VEC_COSINE_DISTANCE(p.embedding, ?) AS cosine_distance,
+         ROUND((1 - VEC_COSINE_DISTANCE(p.embedding, ?)) * 100, 2) AS match_percentage
+       FROM products p
+       JOIN merchants m ON p.merchant_id = m.id
+       WHERE p.quantity > 0
+         AND p.id != ?
+       ORDER BY cosine_distance ASC
+       LIMIT ?;`,
+      [targetEmbedding, targetEmbedding, product_id, parseInt(limit)]
+    );
+
+    conn.release();
+
+    // Process results to ensure proper data types and add additional match info
+    const processedResults = relatedProducts.map(row => ({
+      id: row.id,
+      name: row.name,
+      price: parseFloat(row.price),
+      quantity: row.quantity,
+      description: row.description,
+      category: row.category,
+      created_at: row.created_at,
+      merchant: {
+        id: row.merchant_id,
+        shop_name: row.shop_name,
+        address: row.address,
+        phone: row.phone
+      },
+      similarity_metrics: {
+        cosine_distance: parseFloat(row.cosine_distance),
+        match_percentage: parseFloat(row.match_percentage),
+        match_level: getMatchLevel(parseFloat(row.match_percentage))
+      }
+    }));
+
+    res.json({
+      target_product: {
+        id: product_id,
+        name: targetProduct.name,
+        category: targetProduct.category
+      },
+      related_products: processedResults,
+      total_found: processedResults.length,
+      search_params: {
+        limit: parseInt(limit)
+      }
+    });
+  } catch (err) {
+    console.error('Failed to fetch related products:', err);
+    res.status(500).json({ error: 'Failed to fetch related products', details: err.message });
+  }
+};
+
+// Helper function to categorize match levels
+const getMatchLevel = (matchPercentage) => {
+  if (matchPercentage >= 80) return 'very_high';
+  if (matchPercentage >= 60) return 'high';
+  if (matchPercentage >= 40) return 'medium';
+  if (matchPercentage >= 20) return 'low';
+  return 'very_low';
+};
+
+export { addProduct, updateProduct, getMyProducts, deleteProduct, getProduct, previewEnhancedDescription, getRelatedProducts };
+console.log("Exports in productController.js:", { addProduct, updateProduct, getMyProducts, deleteProduct, getProduct, previewEnhancedDescription, getRelatedProducts });

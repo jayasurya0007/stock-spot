@@ -4,6 +4,15 @@ import { rewriteQueryWithPerplexity } from '../utils/perplexity.js';
 import { getEmbedding } from '../utils/embeddings.js';
 import pool from '../config/database.js';
 
+// Helper function to categorize match levels
+const getMatchLevel = (matchPercentage) => {
+  if (matchPercentage >= 80) return 'very_high';
+  if (matchPercentage >= 60) return 'high';
+  if (matchPercentage >= 40) return 'medium';
+  if (matchPercentage >= 20) return 'low';
+  return 'very_low';
+};
+
 export const searchProducts = async (req, res) => {
   const { query, lat, lng, distance = 5000 } = req.body;
 
@@ -182,34 +191,57 @@ export const searchProducts = async (req, res) => {
       console.log('Partial match products:', partialMatches.map(p => ({ name: p.name, category: p.category })));
     }
 
-    // Process results
+    // Process results with enhanced match percentage calculation
     const exactResults = exactMatches.map(row => ({
       ...row,
       similarity: parseFloat(row.similarity),
-      distance: parseFloat(row.distance)
+      distance: parseFloat(row.distance),
+      match_percentage: 100, // Exact matches get 100%
+      match_level: 'exact'
     }));
 
     const partialResults = partialMatches.map(row => ({
       ...row,
       similarity: parseFloat(row.similarity),
-      distance: parseFloat(row.distance)
+      distance: parseFloat(row.distance),
+      match_percentage: 75, // Partial matches get 75%
+      match_level: 'high'
     }));
 
-    const relatedResults = similarProducts.map(row => ({
-      ...row,
-      similarity: parseFloat(row.similarity),
-      distance: parseFloat(row.distance)
-    }));
+    // Convert cosine distance to match percentage for vector similarity
+    const relatedResults = similarProducts.map(row => {
+      const cosineDistance = parseFloat(row.similarity);
+      const matchPercentage = Math.round((1 - cosineDistance) * 100 * 100) / 100; // Round to 2 decimal places
+      
+      return {
+        ...row,
+        similarity: cosineDistance,
+        distance: parseFloat(row.distance),
+        match_percentage: Math.max(0, matchPercentage), // Ensure non-negative
+        match_level: getMatchLevel(matchPercentage)
+      };
+    });
 
-    // Combine partial matches with related products for the UI
-    const combinedRelated = [...partialResults, ...relatedResults];
+    // Combine partial matches with related products and sort by match percentage (descending)
+    const combinedRelated = [...partialResults, ...relatedResults]
+      .sort((a, b) => b.match_percentage - a.match_percentage);
+
+    // Sort all results by match percentage for the main results array
+    const allResults = [...exactResults, ...combinedRelated]
+      .sort((a, b) => b.match_percentage - a.match_percentage);
 
     res.json({ 
       refinedQuery,
       exactMatches: exactResults,
       relatedProducts: combinedRelated,
-      results: [...exactResults, ...combinedRelated], // Combined for backward compatibility
-      searchType: exactResults.length > 0 ? 'exact_and_related' : 'related_only'
+      results: allResults, // All results sorted by match percentage (descending)
+      searchType: exactResults.length > 0 ? 'exact_and_related' : 'related_only',
+      searchMetrics: {
+        exactCount: exactResults.length,
+        partialCount: partialResults.length,
+        relatedCount: relatedResults.length,
+        totalResults: allResults.length
+      }
     });
   } catch (err) {
     console.error('Search failed:', err);

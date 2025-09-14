@@ -34,5 +34,10 @@ export const productService = {
   deleteProduct: async (productId) => {
     const response = await api.delete(`/product/${productId}`);
     return response.data;
+  },
+
+  getRelatedProducts: async (productId, limit = 20) => {
+    const response = await api.get(`/product/${productId}/related?limit=${limit}`);
+    return response.data;
   }
 };

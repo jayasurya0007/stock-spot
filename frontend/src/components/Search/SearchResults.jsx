@@ -17,6 +17,23 @@ const SearchResults = () => {
   const [searchType, setSearchType] = useState(null);
   const [lastQuery, setLastQuery] = useState('');
 
+  // Helper functions for match percentage display
+  const getMatchColor = (percentage) => {
+    if (percentage >= 80) return '#28a745'; // Green for very high
+    if (percentage >= 60) return '#17a2b8'; // Blue for high  
+    if (percentage >= 40) return '#ffc107'; // Yellow for medium
+    if (percentage >= 20) return '#fd7e14'; // Orange for low
+    return '#dc3545'; // Red for very low
+  };
+
+  const getMatchLevelFromPercentage = (percentage) => {
+    if (percentage >= 80) return 'very high';
+    if (percentage >= 60) return 'high';
+    if (percentage >= 40) return 'medium';
+    if (percentage >= 20) return 'low';
+    return 'very low';
+  };
+
   // Get user location for directions
   useEffect(() => {
     if (navigator.geolocation) {
@@ -192,6 +209,22 @@ const SearchResults = () => {
                     <p><strong>Quantity:</strong> {product.quantity}</p>
                     <p><strong>Merchant:</strong> {product.shop_name}</p>
                     <p><strong>Distance:</strong> {(product.distance / 1000).toFixed(2)} km</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                      <strong>Match:</strong> 
+                      <span style={{
+                        backgroundColor: '#28a745',
+                        color: 'white',
+                        padding: '4px 8px',
+                        borderRadius: '12px',
+                        fontSize: '12px',
+                        fontWeight: 'bold'
+                      }}>
+                        {product.match_percentage || 100}%
+                      </span>
+                      <span style={{ fontSize: '12px', color: '#666' }}>
+                        (exact match)
+                      </span>
+                    </div>
                     {product.description && <p><strong>Description:</strong> {product.description}</p>}
                     <button 
                       onClick={() => setMapMerchant(product)}
@@ -255,7 +288,22 @@ const SearchResults = () => {
                     <p><strong>Quantity:</strong> {product.quantity}</p>
                     <p><strong>Merchant:</strong> {product.shop_name}</p>
                     <p><strong>Distance:</strong> {(product.distance / 1000).toFixed(2)} km</p>
-                    <p><strong>Match:</strong> {(Math.max(0, (1 - product.similarity)) * 100).toFixed(1)}% similarity to your search</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                      <strong>Match:</strong> 
+                      <span style={{
+                        backgroundColor: getMatchColor(product.match_percentage || (Math.max(0, (1 - product.similarity)) * 100)),
+                        color: 'white',
+                        padding: '4px 8px',
+                        borderRadius: '12px',
+                        fontSize: '12px',
+                        fontWeight: 'bold'
+                      }}>
+                        {(product.match_percentage || (Math.max(0, (1 - product.similarity)) * 100)).toFixed(1)}%
+                      </span>
+                      <span style={{ fontSize: '12px', color: '#666' }}>
+                        ({product.match_level || getMatchLevelFromPercentage(product.match_percentage || (Math.max(0, (1 - product.similarity)) * 100))})
+                      </span>
+                    </div>
                     {product.description && <p><strong>Description:</strong> {product.description}</p>}
                     <button 
                       onClick={() => setMapMerchant(product)}
