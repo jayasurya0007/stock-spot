@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { merchantService } from '../../services/merchants';
 import { useAuth } from '../../context/AuthContext';
+import { LoadingSpinner, SkeletonLoader } from '../Loading';
 
 const UpdateShopDetails = () => {
   const [formData, setFormData] = useState({
@@ -148,7 +149,18 @@ const UpdateShopDetails = () => {
     setLoading(false);
   };
 
-  if (fetchLoading) return <div className="loading">Loading shop details...</div>;
+  if (fetchLoading) {
+    return (
+      <div className="container">
+        <div className="form-container">
+          <SkeletonLoader type="text" lines={1} height="32px" width="250px" />
+          <div style={{ marginTop: '2rem' }}>
+            <SkeletonLoader type="card" />
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   if (user?.role !== 'merchant') {
     return (
@@ -334,7 +346,13 @@ const UpdateShopDetails = () => {
               type="submit"
               className="btn btn-primary"
               disabled={loading}
+              style={{ 
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
             >
+              {loading && <LoadingSpinner size="small" color="white" />}
               {loading ? 'Updating...' : 'Update Shop Details'}
             </button>
           </div>

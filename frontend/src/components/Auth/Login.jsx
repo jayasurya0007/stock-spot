@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { LoadingSpinner } from '../Loading';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -67,7 +68,15 @@ const Login = () => {
             type="submit" 
             className="btn btn-primary btn-block"
             disabled={loading}
+            style={{ 
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem'
+            }}
           >
+            {loading && <LoadingSpinner size="small" color="white" />}
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>

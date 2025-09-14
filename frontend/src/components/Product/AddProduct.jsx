@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { productService } from '../../services/products';
 import { useAuth } from '../../context/AuthContext';
+import { LoadingSpinner } from '../Loading';
 
 const AddProduct = () => {
   const [formData, setFormData] = useState({
@@ -198,9 +199,13 @@ const AddProduct = () => {
                   border: 'none',
                   borderRadius: '4px',
                   cursor: 'pointer',
-                  opacity: previewLoading || !formData.name || !formData.price || !formData.quantity ? 0.6 : 1
+                  opacity: previewLoading || !formData.name || !formData.price || !formData.quantity ? 0.6 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.25rem'
                 }}
               >
+                {previewLoading && <LoadingSpinner size="small" color="white" />}
                 {previewLoading ? 'Generating...' : '✨ Enhance with AI'}
               </button>
             </div>
@@ -344,7 +349,14 @@ const AddProduct = () => {
             type="submit" 
             className="btn btn-primary btn-block"
             disabled={loading}
+            style={{ 
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem'
+            }}
           >
+            {loading && <LoadingSpinner size="small" color="white" />}
             {loading ? 'Adding Product...' : 'Add Product'}
           </button>
         </form>

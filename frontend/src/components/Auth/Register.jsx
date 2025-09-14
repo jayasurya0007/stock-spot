@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { LoadingSpinner } from '../Loading';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -17,6 +18,7 @@ const Register = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(false);
   const [locationStatus, setLocationStatus] = useState('');
   
   const { register } = useAuth();
@@ -30,13 +32,18 @@ const Register = () => {
     // If merchant role selected, try to get location
     if (e.target.name === 'role' && e.target.value === 'merchant') {
       if (navigator.geolocation) {
+        setLocationLoading(true);
         setLocationStatus('Getting your location...');
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             setFormData(f => ({ ...f, latitude: pos.coords.latitude, longitude: pos.coords.longitude }));
             setLocationStatus('Location detected ✓');
+            setLocationLoading(false);
           },
-          () => setLocationStatus('Failed to get location')
+          () => {
+            setLocationStatus('Failed to get location');
+            setLocationLoading(false);
+          }
         );
       } else {
         setLocationStatus('Geolocation not supported');
@@ -151,7 +158,12 @@ const Register = () => {
             </select>
             {formData.role === 'merchant' && (
               <>
-                <div className="text-xs text-blue-600 mt-2">{locationStatus}</div>
+                {(locationStatus || locationLoading) && (
+                  <div className="text-xs text-blue-600 mt-2" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {locationLoading && <LoadingSpinner size="small" color="primary" />}
+                    {locationStatus}
+                  </div>
+                )}
                 <div className="flex gap-2 mt-2">
                   <input
                     type="number"
@@ -255,7 +267,15 @@ const Register = () => {
             type="submit" 
             className="btn btn-primary btn-block"
             disabled={loading}
+            style={{ 
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem'
+            }}
           >
+            {loading && <LoadingSpinner size="small" color="white" />}
             {loading ? 'Creating Account...' : 'Create Account'}
           </button>
         </form>

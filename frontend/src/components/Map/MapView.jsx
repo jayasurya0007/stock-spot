@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { merchantService } from '../../services/merchants';
+import { LoadingSpinner, SkeletonLoader } from '../Loading';
 
 // Fix for default markers in Leaflet with webpack
 delete L.Icon.Default.prototype._getIconUrl;
@@ -377,7 +378,26 @@ const MapView = ({ publicView = false }) => {
     };
   }, [loading, merchants, userLocation, navigate]);
 
-  if (loading) return <div className="loading">Loading map data...</div>;
+  if (loading) {
+    return (
+      <div style={{ padding: '2rem' }}>
+        <div style={{ marginBottom: '2rem' }}>
+          <SkeletonLoader type="text" lines={1} height="32px" width="200px" />
+        </div>
+        <div style={{ 
+          height: '400px', 
+          border: '1px solid #ddd', 
+          borderRadius: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#f8f9fa'
+        }}>
+          <LoadingSpinner size="large" color="primary" text="Loading map data..." />
+        </div>
+      </div>
+    );
+  }
   if (error) return <div className="error">{error}</div>;
 
   return (
@@ -395,7 +415,10 @@ const MapView = ({ publicView = false }) => {
               className="btn btn-secondary"
               style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
             >
-              {locationLoading ? 'Getting Location...' : userLocation ? '📍 Zoom to My Location' : '📍 Find My Location'}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {locationLoading && <LoadingSpinner size="small" color="white" />}
+                {locationLoading ? 'Getting Location...' : userLocation ? '📍 Zoom to My Location' : '📍 Find My Location'}
+              </div>
             </button>
             
             {directionsRoute && (

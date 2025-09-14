@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { productService } from '../../services/products';
 import { useAuth } from '../../context/AuthContext';
+import { LoadingSpinner, SkeletonLoader } from '../Loading';
 
 const EditProduct = () => {
   const { id } = useParams();
@@ -153,7 +154,18 @@ const EditProduct = () => {
     }
   };
 
-  if (loading) return <div className="loading">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="container">
+        <div className="form-container">
+          <SkeletonLoader type="text" lines={1} height="32px" width="200px" />
+          <div style={{ marginTop: '2rem' }}>
+            <SkeletonLoader type="card" />
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (error) return <div className="error">{error}</div>;
 
   return (
@@ -229,9 +241,13 @@ const EditProduct = () => {
                   border: 'none',
                   borderRadius: '4px',
                   cursor: 'pointer',
-                  opacity: previewLoading || !formData.name || !formData.price ? 0.6 : 1
+                  opacity: previewLoading || !formData.name || !formData.price ? 0.6 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.25rem'
                 }}
               >
+                {previewLoading && <LoadingSpinner size="small" color="white" />}
                 {previewLoading ? 'Generating...' : '✨ Enhance with AI'}
               </button>
             </div>
@@ -383,7 +399,13 @@ const EditProduct = () => {
               type="submit" 
               className="btn btn-primary"
               disabled={submitLoading}
+              style={{ 
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
             >
+              {submitLoading && <LoadingSpinner size="small" color="white" />}
               {submitLoading ? 'Updating Product...' : 'Update Product'}
             </button>
           </div>

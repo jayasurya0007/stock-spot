@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { productService } from '../../services/products';
 import { useAuth } from '../../context/AuthContext';
+import { LoadingSpinner, SkeletonLoader } from '../Loading';
 
 const MerchantDashboard = () => {
   const [products, setProducts] = useState([]);
@@ -97,7 +98,16 @@ const MerchantDashboard = () => {
     }
   };
 
-  if (loading) return <div className="loading">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="container">
+        <div style={{ marginBottom: '2rem' }}>
+          <SkeletonLoader type="text" lines={1} height="32px" width="200px" />
+        </div>
+        <SkeletonLoader type="table" lines={6} />
+      </div>
+    );
+  }
   if (error) return <div className="error">{error}</div>;
   
   if (user?.role !== 'merchant') {
@@ -289,8 +299,15 @@ const MerchantDashboard = () => {
                             onClick={() => handleDelete(product.id, product.name)}
                             className="btn btn-danger"
                             disabled={deleteLoading[product.id]}
-                            style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
+                            style={{ 
+                              fontSize: '0.8rem', 
+                              padding: '0.4rem 0.8rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.25rem'
+                            }}
                           >
+                            {deleteLoading[product.id] && <LoadingSpinner size="small" color="white" />}
                             {deleteLoading[product.id] ? 'Deleting...' : 'Delete'}
                           </button>
                         </div>

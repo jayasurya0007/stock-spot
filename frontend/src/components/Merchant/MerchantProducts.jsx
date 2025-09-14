@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { merchantService } from '../../services/merchants';
 import { productService } from '../../services/products';
 import { useAuth } from '../../context/AuthContext';
+import { SkeletonLoader } from '../Loading';
 
 const MerchantProducts = () => {
   const { id } = useParams(); // This will be undefined if no ID in URL
@@ -87,7 +88,16 @@ const MerchantProducts = () => {
     });
   };
 
-  if (loading) return <div className="loading">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="container">
+        <SkeletonLoader type="text" lines={1} height="32px" width="300px" />
+        <div style={{ marginTop: '2rem' }}>
+          <SkeletonLoader type="list" lines={5} />
+        </div>
+      </div>
+    );
+  }
   if (error) return <div className="error">{error}</div>;
 
   // Check if current user owns the product

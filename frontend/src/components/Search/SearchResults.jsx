@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import SearchBar from './SearchBar';
 import { searchService } from '../../services/search';
 import LeafletMap from '../Map/LeafletMap';
+import { LoadingSpinner, SkeletonLoader } from '../Loading';
 
 const SearchResults = () => {
   const navigate = useNavigate();
@@ -107,7 +108,14 @@ const SearchResults = () => {
       
       <SearchBar onSearch={handleSearch} />
       
-      {loading && <div className="loading">Searching...</div>}
+      {loading && (
+        <div style={{ margin: '2rem 0' }}>
+          <LoadingSpinner size="large" color="primary" text="Searching for products..." centered />
+          <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+            <SkeletonLoader type="list" lines={3} />
+          </div>
+        </div>
+      )}
       {error && <div className="error">{error}</div>}
       
       {!loading && !error && results.length === 0 && (

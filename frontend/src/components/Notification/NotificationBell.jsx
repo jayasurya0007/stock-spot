@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getNotifications, getUnreadCount, markNotificationAsRead, markAllNotificationsAsRead, checkNotificationTime } from '../../services/notifications';
+import { LoadingSpinner, SkeletonLoader } from '../Loading';
 import './NotificationBell.css';
 
 const NotificationBell = () => {
@@ -183,7 +184,9 @@ const NotificationBell = () => {
 
           <div className="notification-list">
             {loading && notifications.length === 0 ? (
-              <div className="notification-loading">Loading...</div>
+              <div style={{ padding: '1rem' }}>
+                <SkeletonLoader type="list" lines={3} />
+              </div>
             ) : notifications.length === 0 ? (
               <div className="no-notifications">
                 <span className="no-notifications-icon">📭</span>
@@ -230,7 +233,10 @@ const NotificationBell = () => {
                     onClick={loadMoreNotifications}
                     disabled={loading}
                   >
-                    {loading ? 'Loading...' : 'Load more'}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {loading && <LoadingSpinner size="small" color="primary" />}
+                      {loading ? 'Loading...' : 'Load more'}
+                    </div>
                   </button>
                 )}
               </>

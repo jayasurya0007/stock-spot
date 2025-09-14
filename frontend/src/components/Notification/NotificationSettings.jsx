@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getNotificationSettings, updateNotificationSettings, triggerLowStockCheck } from '../../services/notifications';
+import { LoadingSpinner, SkeletonLoader } from '../Loading';
 import './NotificationSettings.css';
 
 const NotificationSettings = () => {
@@ -96,9 +97,14 @@ const NotificationSettings = () => {
 
   if (loading) {
     return (
-      <div className="notification-settings-loading">
-        <div className="loading-spinner"></div>
-        <p>Loading notification settings...</p>
+      <div className="notification-settings">
+        <div className="settings-header">
+          <SkeletonLoader type="text" lines={1} height="32px" width="250px" />
+          <SkeletonLoader type="text" lines={1} height="16px" width="400px" />
+        </div>
+        <div style={{ marginTop: '2rem' }}>
+          <SkeletonLoader type="card" />
+        </div>
       </div>
     );
   }
@@ -298,7 +304,14 @@ const NotificationSettings = () => {
             className="test-btn"
             onClick={handleTestNotifications}
             disabled={testing || !settings.low_stock_enabled}
+            style={{ 
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              justifyContent: 'center'
+            }}
           >
+            {testing && <LoadingSpinner size="small" color="white" />}
             {testing ? 'Testing...' : '🧪 Test Notifications'}
           </button>
           
@@ -306,7 +319,14 @@ const NotificationSettings = () => {
             className="save-btn"
             onClick={handleSave}
             disabled={saving}
+            style={{ 
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              justifyContent: 'center'
+            }}
           >
+            {saving && <LoadingSpinner size="small" color="white" />}
             {saving ? 'Saving...' : '💾 Save Settings'}
           </button>
         </div>

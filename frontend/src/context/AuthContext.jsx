@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../services/auth';
+import { PageLoader } from '../components/Loading';
 
 const AuthContext = createContext();
 
@@ -66,6 +67,16 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!user,
     loading
   };
+
+  if (loading) {
+    return (
+      <PageLoader 
+        message="Initializing StockSpot" 
+        submessage="Setting up your session..."
+        type="spinner"
+      />
+    );
+  }
 
   return (
     <AuthContext.Provider value={value}>
