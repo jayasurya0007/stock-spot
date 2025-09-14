@@ -3,24 +3,7 @@
 import pool from '../config/database.js';
 
 class NotificationSettings {
-  // Get notification setti  // Check if notification was sent today
-  static async wasNotificationSentToday(merchantId) {
-    try {
-      const [rows] = await pool.execute(
-        'SELECT id FROM notification_logs WHERE merchant_id = ? AND notification_date = CURDATE()',
-        [merchantId]
-      );
-      
-      return rows.length > 0;
-    } catch (error) {
-      throw new Error(`Error checking notification log: ${error.message}`);
-    }
-  }
-
-  // Alias for consistency
-  static async hasBeenProcessedToday(merchantId) {
-    return await this.wasNotificationSentToday(merchantId);
-  }chant
+  // Get notification settings for a merchant
   static async findByMerchantId(merchantId) {
     try {
       const [rows] = await pool.execute(

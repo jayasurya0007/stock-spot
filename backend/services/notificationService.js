@@ -1,5 +1,6 @@
 //services/notificationService.js
 
+import pool from '../config/database.js';
 import Product from '../models/Product.js';
 import Merchant from '../models/Merchant.js';
 import Notification from '../models/Notification.js';
@@ -299,6 +300,25 @@ class NotificationService {
       return await Notification.markAllAsRead(merchantId);
     } catch (error) {
       throw new Error(`Error marking all notifications as read: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get merchant ID from user ID
+   * @param {number} userId - User ID
+   * @returns {number|null} Merchant ID or null if not found
+   */
+  static async getMerchantIdFromUserId(userId) {
+    try {
+      const Merchant = (await import('../models/Merchant.js')).default;
+      const [rows] = await pool.execute(
+        'SELECT id FROM merchants WHERE user_id = ?',
+        [userId]
+      );
+      
+      return rows.length > 0 ? rows[0].id : null;
+    } catch (error) {
+      throw new Error(`Error getting merchant ID: ${error.message}`);
     }
   }
 

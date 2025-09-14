@@ -9,7 +9,18 @@ class NotificationController {
    */
   static async getNotifications(req, res) {
     try {
-      const merchantId = req.user.id; // Assuming auth middleware sets req.user
+      const userId = req.user.id;
+      
+      // Get merchant ID from user ID
+      const merchantId = await NotificationService.getMerchantIdFromUserId(userId);
+      
+      if (!merchantId) {
+        return res.status(404).json({
+          success: false,
+          message: 'Merchant profile not found. Please complete your merchant setup.'
+        });
+      }
+      
       const { page, limit, unread } = req.query;
       
       const options = {
@@ -39,7 +50,17 @@ class NotificationController {
    */
   static async getUnreadCount(req, res) {
     try {
-      const merchantId = req.user.id;
+      const userId = req.user.id;
+      
+      // Get merchant ID from user ID
+      const merchantId = await NotificationService.getMerchantIdFromUserId(userId);
+      
+      if (!merchantId) {
+        return res.status(404).json({
+          success: false,
+          message: 'Merchant profile not found. Please complete your merchant setup.'
+        });
+      }
       
       const result = await NotificationService.getMerchantNotifications(merchantId, { 
         limit: 1, 
@@ -67,7 +88,18 @@ class NotificationController {
    */
   static async markAsRead(req, res) {
     try {
-      const merchantId = req.user.id;
+      const userId = req.user.id;
+      
+      // Get merchant ID from user ID
+      const merchantId = await NotificationService.getMerchantIdFromUserId(userId);
+      
+      if (!merchantId) {
+        return res.status(404).json({
+          success: false,
+          message: 'Merchant profile not found. Please complete your merchant setup.'
+        });
+      }
+      
       const { id } = req.params;
       
       const success = await NotificationService.markNotificationAsRead(parseInt(id), merchantId);
@@ -98,7 +130,17 @@ class NotificationController {
    */
   static async markAllAsRead(req, res) {
     try {
-      const merchantId = req.user.id;
+      const userId = req.user.id;
+      
+      // Get merchant ID from user ID
+      const merchantId = await NotificationService.getMerchantIdFromUserId(userId);
+      
+      if (!merchantId) {
+        return res.status(404).json({
+          success: false,
+          message: 'Merchant profile not found. Please complete your merchant setup.'
+        });
+      }
       
       const count = await NotificationService.markAllNotificationsAsRead(merchantId);
       
@@ -122,7 +164,17 @@ class NotificationController {
    */
   static async getSettings(req, res) {
     try {
-      const merchantId = req.user.id;
+      const userId = req.user.id;
+      
+      // Get merchant ID from user ID
+      const merchantId = await NotificationService.getMerchantIdFromUserId(userId);
+      
+      if (!merchantId) {
+        return res.status(404).json({
+          success: false,
+          message: 'Merchant profile not found. Please complete your merchant setup.'
+        });
+      }
       
       const settings = await NotificationService.getMerchantNotificationSettings(merchantId);
       
@@ -145,7 +197,18 @@ class NotificationController {
    */
   static async updateSettings(req, res) {
     try {
-      const merchantId = req.user.id;
+      const userId = req.user.id;
+      
+      // Get merchant ID from user ID
+      const merchantId = await NotificationService.getMerchantIdFromUserId(userId);
+      
+      if (!merchantId) {
+        return res.status(404).json({
+          success: false,
+          message: 'Merchant profile not found. Please complete your merchant setup.'
+        });
+      }
+      
       const settingsData = req.body;
       
       // Validate settings data
@@ -224,7 +287,17 @@ class NotificationController {
    */
   static async checkNotificationTime(req, res) {
     try {
-      const merchantId = req.user.id;
+      const userId = req.user.id;
+      
+      // Get merchant ID from user ID
+      const merchantId = await NotificationService.getMerchantIdFromUserId(userId);
+      
+      if (!merchantId) {
+        return res.status(404).json({
+          success: false,
+          message: 'Merchant profile not found. Please complete your merchant setup.'
+        });
+      }
       
       const result = await NotificationService.checkAndProcessMerchantNotificationTime(merchantId);
       
@@ -248,7 +321,17 @@ class NotificationController {
    */
   static async triggerLowStockCheck(req, res) {
     try {
-      const merchantId = req.user.id;
+      const userId = req.user.id;
+      
+      // Get merchant ID from user ID
+      const merchantId = await NotificationService.getMerchantIdFromUserId(userId);
+      
+      if (!merchantId) {
+        return res.status(404).json({
+          success: false,
+          message: 'Merchant profile not found. Please complete your merchant setup.'
+        });
+      }
       
       const notificationsCreated = await NotificationService.triggerLowStockCheckForMerchant(merchantId);
       
@@ -272,7 +355,18 @@ class NotificationController {
    */
   static async getNotificationById(req, res) {
     try {
-      const merchantId = req.user.id;
+      const userId = req.user.id;
+      
+      // Get merchant ID from user ID
+      const merchantId = await NotificationService.getMerchantIdFromUserId(userId);
+      
+      if (!merchantId) {
+        return res.status(404).json({
+          success: false,
+          message: 'Merchant profile not found. Please complete your merchant setup.'
+        });
+      }
+      
       const { id } = req.params;
       
       const notification = await Notification.findById(parseInt(id), merchantId);
