@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { merchantService } from '../../services/merchants';
 import { useAuth } from '../../context/AuthContext';
-import { LoadingSpinner, SkeletonLoader } from '../Loading';
+import { LoadingSpinner } from '../Loading';
+import { MapPin, Navigation, Save, X } from 'lucide-react';
 
 const UpdateShopDetails = () => {
   const [formData, setFormData] = useState({
@@ -151,11 +152,17 @@ const UpdateShopDetails = () => {
 
   if (fetchLoading) {
     return (
-      <div className="container">
-        <div className="form-container">
-          <SkeletonLoader type="text" lines={1} height="32px" width="250px" />
-          <div style={{ marginTop: '2rem' }}>
-            <SkeletonLoader type="card" />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-md p-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-3/4 mb-6"></div>
+            <div className="space-y-4">
+              <div className="h-4 bg-gray-200 rounded w-full"></div>
+              <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+              <div className="h-10 bg-gray-200 rounded"></div>
+              <div className="h-10 bg-gray-200 rounded"></div>
+              <div className="h-10 bg-gray-200 rounded"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -164,199 +171,236 @@ const UpdateShopDetails = () => {
   
   if (user?.role !== 'merchant') {
     return (
-      <div className="error">
-        <h2>Access Denied</h2>
-        <p>This page is only available for merchants.</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-md p-8 text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
+          <p className="text-gray-600 mb-6">This page is only available for merchants.</p>
+          <button 
+            onClick={() => navigate('/')}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          >
+            Return to Home
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container">
-      <div className="form-container">
-        <h2 className="form-title">Update Shop Details</h2>
-        {error && <div className="error">{error}</div>}
-        {success && <div className="success">{success}</div>}
-        
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="shop_name" className="form-label">Shop Name *</label>
-            <input
-              type="text"
-              id="shop_name"
-              name="shop_name"
-              className="form-input"
-              value={formData.shop_name}
-              onChange={handleChange}
-              required
-              placeholder="Enter your shop name"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="address" className="form-label">
-              Address {!formData.use_manual_coords && '*'}
-            </label>
-            <textarea
-              id="address"
-              name="address"
-              className="form-input"
-              value={formData.address}
-              onChange={handleChange}
-              required={!formData.use_manual_coords}
-              rows="3"
-              placeholder="Enter your shop address"
-              disabled={formData.use_manual_coords}
-            />
-            {formData.use_manual_coords && (
-              <small style={{ color: '#666', marginTop: '0.25rem', display: 'block' }}>
-                Address is optional when using manual coordinates
-              </small>
-            )}
-          </div>
-
-          <div className="form-group">
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
-              <input
-                type="checkbox"
-                id="use_manual_coords"
-                name="use_manual_coords"
-                checked={formData.use_manual_coords}
-                onChange={handleChange}
-                style={{ marginRight: '0.5rem' }}
-              />
-              <label htmlFor="use_manual_coords" style={{ margin: 0, cursor: 'pointer' }}>
-                Use manual coordinates (latitude/longitude)
-              </label>
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-white rounded-xl shadow-md overflow-hidden">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-900">Update Shop Details</h2>
+              <button
+                onClick={() => navigate('/')}
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md hover:bg-gray-100"
+              >
+                <X size={24} />
+              </button>
             </div>
+          </div>
+
+          <div className="p-6">
+            {error && (
+              <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6 border border-red-200">
+                {error}
+              </div>
+            )}
             
-            {formData.use_manual_coords && (
-              <>
-                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                  <div style={{ flex: 1 }}>
-                    <label htmlFor="latitude" className="form-label">Latitude *</label>
-                    <input
-                      type="number"
-                      id="latitude"
-                      name="latitude"
-                      className="form-input"
-                      value={formData.latitude}
-                      onChange={handleChange}
-                      step="any"
-                      min="-90"
-                      max="90"
-                      placeholder="e.g., 40.7128"
-                      required={formData.use_manual_coords}
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label htmlFor="longitude" className="form-label">Longitude *</label>
-                    <input
-                      type="number"
-                      id="longitude"
-                      name="longitude"
-                      className="form-input"
-                      value={formData.longitude}
-                      onChange={handleChange}
-                      step="any"
-                      min="-180"
-                      max="180"
-                      placeholder="e.g., -74.0060"
-                      required={formData.use_manual_coords}
-                    />
-                  </div>
+            {success && (
+              <div className="bg-green-50 text-green-700 p-4 rounded-lg mb-6 border border-green-200">
+                {success}
+              </div>
+            )}
+            
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label htmlFor="shop_name" className="block text-sm font-medium text-gray-700 mb-1">
+                  Shop Name *
+                </label>
+                <input
+                  type="text"
+                  id="shop_name"
+                  name="shop_name"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                  value={formData.shop_name}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter your shop name"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                  Address {!formData.use_manual_coords && '*'}
+                </label>
+                <textarea
+                  id="address"
+                  name="address"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                  value={formData.address}
+                  onChange={handleChange}
+                  required={!formData.use_manual_coords}
+                  rows="3"
+                  placeholder="Enter your shop address"
+                  disabled={formData.use_manual_coords}
+                />
+                {formData.use_manual_coords && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    Address is optional when using manual coordinates
+                  </p>
+                )}
+              </div>
+
+              <div className="border-t border-gray-200 pt-6">
+                <div className="flex items-center mb-4">
+                  <input
+                    type="checkbox"
+                    id="use_manual_coords"
+                    name="use_manual_coords"
+                    checked={formData.use_manual_coords}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="use_manual_coords" className="ml-2 block text-sm font-medium text-gray-700">
+                    Use manual coordinates (latitude/longitude)
+                  </label>
                 </div>
                 
+                {formData.use_manual_coords && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label htmlFor="latitude" className="block text-sm font-medium text-gray-700 mb-1">
+                          Latitude *
+                        </label>
+                        <input
+                          type="number"
+                          id="latitude"
+                          name="latitude"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                          value={formData.latitude}
+                          onChange={handleChange}
+                          step="any"
+                          min="-90"
+                          max="90"
+                          placeholder="e.g., 40.7128"
+                          required={formData.use_manual_coords}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="longitude" className="block text-sm font-medium text-gray-700 mb-1">
+                          Longitude *
+                        </label>
+                        <input
+                          type="number"
+                          id="longitude"
+                          name="longitude"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                          value={formData.longitude}
+                          onChange={handleChange}
+                          step="any"
+                          min="-180"
+                          max="180"
+                          placeholder="e.g., -74.0060"
+                          required={formData.use_manual_coords}
+                        />
+                      </div>
+                    </div>
+                    
+                    <button
+                      type="button"
+                      onClick={getCurrentLocation}
+                      disabled={locationLoading}
+                      className="w-full bg-gray-200 text-gray-800 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors flex items-center justify-center gap-2 mb-4"
+                    >
+                      {locationLoading ? (
+                        <>
+                          <LoadingSpinner size="small" color="gray" />
+                          Getting Location...
+                        </>
+                      ) : (
+                        <>
+                          <Navigation size={18} />
+                          Use My Current Location
+                        </>
+                      )}
+                    </button>
+                    
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <p className="text-sm text-blue-700">
+                        Click the button above to automatically fill in your current coordinates, 
+                        or enter them manually. Latitude ranges from -90 to 90, longitude from -180 to 180.
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="owner_name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Owner Name
+                  </label>
+                  <input
+                    type="text"
+                    id="owner_name"
+                    name="owner_name"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                    value={formData.owner_name}
+                    onChange={handleChange}
+                    placeholder="Enter owner name"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="Enter phone number"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col-reverse sm:flex-row gap-3 pt-6">
                 <button
                   type="button"
-                  onClick={getCurrentLocation}
-                  disabled={locationLoading}
-                  className="btn btn-secondary"
-                  style={{ 
-                    marginBottom: '1rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                  }}
+                  onClick={() => navigate('/')}
+                  className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                  disabled={loading}
                 >
-                  {locationLoading ? (
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                  disabled={loading}
+                >
+                  {loading ? (
                     <>
-                      <span style={{ 
-                        display: 'inline-block',
-                        width: '16px',
-                        height: '16px',
-                        border: '2px solid #fff',
-                        borderTop: '2px solid transparent',
-                        borderRadius: '50%',
-                        animation: 'spin 1s linear infinite'
-                      }}></span>
-                      Getting Location...
+                      <LoadingSpinner size="small" color="white" />
+                      Updating...
                     </>
                   ) : (
                     <>
-                      📍 Use My Current Location
+                      <Save size={18} />
+                      Update Shop Details
                     </>
                   )}
                 </button>
-                
-                <small style={{ color: '#666', display: 'block', marginBottom: '1rem' }}>
-                  Click the button above to automatically fill in your current coordinates, 
-                  or enter them manually. Latitude ranges from -90 to 90, longitude from -180 to 180.
-                </small>
-              </>
-            )}
+              </div>
+            </form>
           </div>
-
-          <div className="form-group">
-            <label htmlFor="owner_name" className="form-label">Owner Name</label>
-            <input
-              type="text"
-              id="owner_name"
-              name="owner_name"
-              className="form-input"
-              value={formData.owner_name}
-              onChange={handleChange}
-              placeholder="Enter owner name"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="phone" className="form-label">Phone Number</label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              className="form-input"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="Enter phone number"
-            />
-          </div>
-
-          <div className="form-actions">
-            <button
-              type="button"
-              onClick={() => navigate('/')}
-              className="btn btn-secondary"
-              disabled={loading}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={loading}
-              style={{ 
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}
-            >
-              {loading && <LoadingSpinner size="small" color="white" />}
-              {loading ? 'Updating...' : 'Update Shop Details'}
-            </button>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
   );

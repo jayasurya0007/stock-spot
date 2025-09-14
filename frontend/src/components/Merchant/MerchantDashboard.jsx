@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { productService } from '../../services/products';
 import { useAuth } from '../../context/AuthContext';
-import { LoadingSpinner, SkeletonLoader } from '../Loading';
+import { LoadingSpinner } from '../Loading';
+import { Search, Plus, Edit, Trash2, Package } from 'lucide-react';
 
 const MerchantDashboard = () => {
   const [products, setProducts] = useState([]);
@@ -20,7 +21,7 @@ const MerchantDashboard = () => {
       const data = await productService.getMyProducts();
       const productsArray = data.products || [];
       setProducts(productsArray);
-      setFilteredProducts(productsArray); // Initially show all products
+      setFilteredProducts(productsArray);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to fetch products');
     } finally {
@@ -34,7 +35,6 @@ const MerchantDashboard = () => {
     }
   }, [user]);
 
-  // Filter products based on search query
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredProducts(products);
@@ -52,7 +52,6 @@ const MerchantDashboard = () => {
     setSearchQuery(e.target.value);
   };
 
-  // Function to highlight search terms in text
   const highlightSearchTerm = (text, searchTerm) => {
     if (!searchTerm || !text) return text;
     
@@ -64,13 +63,7 @@ const MerchantDashboard = () => {
         return (
           <span 
             key={index} 
-            style={{ 
-              backgroundColor: '#fff3cd', 
-              color: '#856404',
-              fontWeight: 'bold',
-              padding: '0 2px',
-              borderRadius: '2px'
-            }}
+            className="bg-yellow-100 text-yellow-800 font-bold px-1 rounded"
           >
             {part}
           </span>
@@ -90,7 +83,6 @@ const MerchantDashboard = () => {
       await productService.deleteProduct(productId);
       const updatedProducts = products.filter(p => p.id !== productId);
       setProducts(updatedProducts);
-      // Filtered products will be updated automatically by the useEffect
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to delete product');
     } finally {
@@ -98,230 +90,235 @@ const MerchantDashboard = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="container">
-        <div style={{ marginBottom: '2rem' }}>
-          <SkeletonLoader type="text" lines={1} height="32px" width="200px" />
-        </div>
-        <SkeletonLoader type="table" lines={6} />
-      </div>
-    );
-  }
-  if (error) return <div className="error">{error}</div>;
-  
-  if (user?.role !== 'merchant') {
-    return (
-      <div className="error">
-        <h2>Access Denied</h2>
-        <p>This page is only available for merchants.</p>
-        <p>Current user role: {user?.role || 'No role'}</p>
-        <p>User: {JSON.stringify(user)}</p>
-      </div>
-    );
-  }
-
-  // Check if current user owns the product
   const canEditProduct = (product) => {
-    // Since this is MerchantDashboard and uses getMyProducts(), 
-    // all products should belong to the current merchant
     return user?.role === 'merchant' && (product.merchant_id === user.id || !product.merchant_id);
   };
 
-  return (
-    <div className="container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <h1 style={{ margin: 0 }}>My Inventory</h1>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-          {products.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '0.9rem', color: '#666' }}>
-                {filteredProducts.length} of {products.length} products
-              </span>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+            <div className="h-8 bg-gray-200 rounded w-48 mb-4 animate-pulse"></div>
+            <div className="space-y-4">
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className="h-16 bg-gray-100 rounded-lg animate-pulse"></div>
+              ))}
             </div>
-          )}
-          
-          <Link to="/products/add" className="btn btn-primary">
-            Add New Product
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (error) return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+      <div className="max-w-md w-full bg-red-50 text-red-700 p-4 rounded-lg border border-red-200">
+        {error}
+      </div>
+    </div>
+  );
+  
+  if (user?.role !== 'merchant') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-md p-8 text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
+          <p className="text-gray-600 mb-6">This page is only available for merchants.</p>
+          <Link to="/" className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+            Return to Home
           </Link>
         </div>
       </div>
+    );
+  }
 
-      {products.length > 0 && (
-        <div style={{ marginBottom: '2rem' }}>
-          <div style={{ position: 'relative', maxWidth: '400px' }}>
-            <input
-              type="text"
-              placeholder="Search products by name, description, or category..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              style={{
-                width: '100%',
-                padding: '0.75rem 2.5rem 0.75rem 1rem',
-                border: '2px solid #ddd',
-                borderRadius: '8px',
-                fontSize: '1rem',
-                outline: 'none',
-                transition: 'border-color 0.3s ease'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#3498db'}
-              onBlur={(e) => e.target.style.borderColor = '#ddd'}
-            />
-            <div style={{
-              position: 'absolute',
-              right: '0.75rem',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: '#666',
-              fontSize: '1.2rem'
-            }}>
-              🔍
-            </div>
-          </div>
+  return (
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Inventory</h1>
           
-          {searchQuery && (
-            <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#666' }}>
-              {filteredProducts.length > 0 
-                ? `Found ${filteredProducts.length} product${filteredProducts.length !== 1 ? 's' : ''} matching "${searchQuery}"`
-                : `No products found matching "${searchQuery}"`
-              }
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  style={{
-                    marginLeft: '0.5rem',
-                    background: 'none',
-                    border: 'none',
-                    color: '#3498db',
-                    cursor: 'pointer',
-                    textDecoration: 'underline',
-                    fontSize: '0.9rem'
-                  }}
-                >
-                  Clear search
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {products.length === 0 ? (
-        <div className="card">
-          <p>You don't have any products yet. Start by adding your first product!</p>
-        </div>
-      ) : filteredProducts.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>
-          <p>No products match your search criteria.</p>
-          <button
-            onClick={() => setSearchQuery('')}
-            className="btn btn-secondary"
-            style={{ marginTop: '1rem' }}
-          >
-            Show All Products
-          </button>
-        </div>
-      ) : (
-        <div className="card">
-          <h2 className="card-title">
-            Your Products ({filteredProducts.length}{filteredProducts.length !== products.length ? ` of ${products.length}` : ''})
-          </h2>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
-              <thead>
-                <tr style={{ borderBottom: '2px solid #ddd' }}>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>Product Name</th>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>Description</th>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>Category</th>
-                  <th style={{ padding: '12px', textAlign: 'right' }}>Price</th>
-                  <th style={{ padding: '12px', textAlign: 'right' }}>Stock</th>
-                  <th style={{ padding: '12px', textAlign: 'center' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredProducts.map(product => (
-                  <tr key={product.id} style={{ borderBottom: '1px solid #eee' }}>
-                    <td style={{ padding: '12px', fontWeight: 'bold' }}>
-                      {searchQuery ? highlightSearchTerm(product.name, searchQuery) : product.name}
-                    </td>
-                    <td style={{ padding: '12px', maxWidth: '200px' }}>
-                      {product.description ? (
-                        searchQuery ? 
-                          highlightSearchTerm(
-                            product.description.length > 50 
-                              ? `${product.description.substring(0, 50)}...`
-                              : product.description,
-                            searchQuery
-                          ) :
-                          product.description.length > 50 
-                            ? `${product.description.substring(0, 50)}...`
-                            : product.description
-                      ) : '-'}
-                    </td>
-                    <td style={{ padding: '12px' }}>
-                      {product.category ? (
-                        <span style={{
-                          display: 'inline-block',
-                          padding: '0.25rem 0.5rem',
-                          backgroundColor: '#ecf0f1',
-                          color: '#2c3e50',
-                          borderRadius: '12px',
-                          fontSize: '0.75rem',
-                          fontWeight: 'bold'
-                        }}>
-                          {searchQuery ? highlightSearchTerm(product.category, searchQuery) : product.category}
-                        </span>
-                      ) : (
-                        <span style={{ color: '#999', fontSize: '0.8rem' }}>-</span>
-                      )}
-                    </td>
-                    <td style={{ padding: '12px', textAlign: 'right' }}>${product.price}</td>
-                    <td style={{ padding: '12px', textAlign: 'right' }}>
-                      <span style={{ 
-                        color: product.quantity === 0 ? 'red' : product.quantity < 10 ? 'orange' : 'green',
-                        fontWeight: 'bold'
-                      }}>
-                        {product.quantity}
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px', textAlign: 'center' }}>
-                      {canEditProduct(product) ? (
-                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                          <Link 
-                            to={`/products/edit/${product.id}`}
-                            className="btn btn-secondary"
-                            style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
-                          >
-                            Edit
-                          </Link>
-                          <button
-                            onClick={() => handleDelete(product.id, product.name)}
-                            className="btn btn-danger"
-                            disabled={deleteLoading[product.id]}
-                            style={{ 
-                              fontSize: '0.8rem', 
-                              padding: '0.4rem 0.8rem',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.25rem'
-                            }}
-                          >
-                            {deleteLoading[product.id] && <LoadingSpinner size="small" color="white" />}
-                            {deleteLoading[product.id] ? 'Deleting...' : 'Delete'}
-                          </button>
-                        </div>
-                      ) : (
-                        <span style={{ color: '#666', fontSize: '0.8rem' }}>View Only</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="flex items-center gap-3 flex-wrap">
+            {products.length > 0 && (
+              <div className="text-sm text-gray-600">
+                {filteredProducts.length} of {products.length} products
+              </div>
+            )}
+            
+            <Link to="/products/add" className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
+              <Plus size={16} />
+              Add New Product
+            </Link>
           </div>
         </div>
-      )}
+
+        {products.length > 0 && (
+          <div className="mb-6">
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="text"
+                placeholder="Search products by name, description, or category..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+              />
+            </div>
+            
+            {searchQuery && (
+              <div className="mt-2 text-sm text-gray-600">
+                {filteredProducts.length > 0 
+                  ? `Found ${filteredProducts.length} product${filteredProducts.length !== 1 ? 's' : ''} matching "${searchQuery}"`
+                  : `No products found matching "${searchQuery}"`
+                }
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="ml-2 text-blue-600 hover:text-blue-700 underline"
+                  >
+                    Clear search
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {products.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-md p-8 text-center">
+            <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Package size={32} className="text-blue-600" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">No Products Yet</h2>
+            <p className="text-gray-600 mb-6">You don't have any products yet. Start by adding your first product!</p>
+            <Link to="/products/add" className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+              Add Your First Product
+            </Link>
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-md p-8 text-center">
+            <p className="text-gray-600 mb-4">No products match your search criteria.</p>
+            <button
+              onClick={() => setSearchQuery('')}
+              className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+            >
+              Show All Products
+            </button>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-md overflow-hidden">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-lg font-bold text-gray-900">
+                Your Products ({filteredProducts.length}{filteredProducts.length !== products.length ? ` of ${products.length}` : ''})
+              </h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Description</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredProducts.map(product => (
+                    <tr key={product.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="font-medium text-gray-900">
+                          {searchQuery ? highlightSearchTerm(product.name, searchQuery) : product.name}
+                        </div>
+                        <div className="text-sm text-gray-500 md:hidden mt-1">
+                          {product.description ? (
+                            searchQuery ? 
+                              highlightSearchTerm(
+                                product.description.length > 50 
+                                  ? `${product.description.substring(0, 50)}...`
+                                  : product.description,
+                                searchQuery
+                              ) :
+                              product.description.length > 50 
+                                ? `${product.description.substring(0, 50)}...`
+                                : product.description
+                          ) : '-'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
+                        {product.description ? (
+                          searchQuery ? 
+                            highlightSearchTerm(
+                              product.description.length > 100 
+                                ? `${product.description.substring(0, 100)}...`
+                                : product.description,
+                              searchQuery
+                            ) :
+                            product.description.length > 100 
+                              ? `${product.description.substring(0, 100)}...`
+                              : product.description
+                        ) : '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {product.category ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {searchQuery ? highlightSearchTerm(product.category, searchQuery) : product.category}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-sm">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
+                        ${product.price}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          product.quantity === 0 
+                            ? 'bg-red-100 text-red-800' 
+                            : product.quantity < 10 
+                              ? 'bg-yellow-100 text-yellow-800' 
+                              : 'bg-green-100 text-green-800'
+                        }`}>
+                          {product.quantity}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                        {canEditProduct(product) ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <Link 
+                              to={`/products/edit/${product.id}`}
+                              className="text-blue-600 hover:text-blue-900 p-1 rounded-md hover:bg-blue-50 transition-colors"
+                              title="Edit"
+                            >
+                              <Edit size={16} />
+                            </Link>
+                            <button
+                              onClick={() => handleDelete(product.id, product.name)}
+                              disabled={deleteLoading[product.id]}
+                              className="text-red-600 hover:text-red-900 p-1 rounded-md hover:bg-red-50 transition-colors"
+                              title="Delete"
+                            >
+                              {deleteLoading[product.id] ? (
+                                <LoadingSpinner size="small" color="red" />
+                              ) : (
+                                <Trash2 size={16} />
+                              )}
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-gray-500 text-xs">View Only</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

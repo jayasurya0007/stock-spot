@@ -3,15 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { merchantService } from '../../services/merchants';
-import { LoadingSpinner, SkeletonLoader } from '../Loading';
+import { LoadingSpinner } from '../Loading';
+import '../../styles/MapView.css';
 
-// Fix for default markers in Leaflet with webpack
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
+// Better default locations for major Indian cities (city-level zoom)
+const getDefaultLocation = () => {
+  // You can enhance this to detect user's timezone or use IP-based location
+  // For now, using Chennai as default but with better zoom
+  return {
+    coords: [13.0827, 80.2707], // Chennai
+    zoom: 13,
+    name: 'Chennai, India'
+  };
+};
 
 const MapView = ({ publicView = false }) => {
   const [merchants, setMerchants] = useState([]);
@@ -27,22 +31,9 @@ const MapView = ({ publicView = false }) => {
   // Create custom icons
   const createShopIcon = () => {
     return L.divIcon({
-      html: `<div style="
-        background-color: #e74c3c;
-        width: 26px;
-        height: 26px;
-        border-radius: 50%;
-        border: 3px solid white;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: bold;
-        font-size: 12px;
-        z-index: 500;
-        position: relative;
-      ">🏪</div>`,
+      html: `<div class="shop-marker">
+        <span>🏪</span>
+      </div>`,
       className: 'custom-shop-marker',
       iconSize: [32, 32],
       iconAnchor: [16, 16]
@@ -51,26 +42,53 @@ const MapView = ({ publicView = false }) => {
 
   const createUserIcon = () => {
     return L.divIcon({
-      html: `<div style="
-        background-color: #3498db;
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        border: 4px solid white;
-        box-shadow: 0 3px 6px rgba(0,0,0,0.4);
-        animation: pulse 2s infinite;
-        z-index: 1000;
-        position: relative;
-      "></div>`,
+      html: `<div class="user-marker">
+        <div class="user-location-dot"></div>
+        <div class="user-location-pulse"></div>
+      </div>`,
       className: 'custom-user-marker',
       iconSize: [32, 32],
       iconAnchor: [16, 16]
     });
   };
 
+  const zoomToUserLocation = () => {
+    if (userLocation && mapInstance.current) {
+      // Clear any existing directions when zooming to user location
+      if (directionsRoute) {
+        mapInstance.current.removeLayer(directionsRoute);
+        setDirectionsRoute(null);
+      }
+      
+      mapInstance.current.setView([userLocation.lat, userLocation.lng], 18, {
+        animate: true,
+        duration: 1.5
+      });
+      
+      // Show a temporary popup at user location
+      L.popup()
+        .setLatLng([userLocation.lat, userLocation.lng])
+        .setContent(`
+          <div class="user-location-popup">
+            <h4>📍 Your Current Location</h4>
+            <p>Lat: ${userLocation.lat.toFixed(6)}</p>
+            <p>Lng: ${userLocation.lng.toFixed(6)}</p>
+            <small>Zoomed to street level view</small>
+          </div>
+        `)
+        .openOn(mapInstance.current);
+    }
+  };
+
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
       setError('Geolocation is not supported by this browser');
+      return;
+    }
+
+    // If user location already exists, just zoom to it
+    if (userLocation) {
+      zoomToUserLocation();
       return;
     }
 
@@ -85,17 +103,32 @@ const MapView = ({ publicView = false }) => {
         setUserLocation(newLocation);
         setLocationLoading(false);
         
-        // Zoom to user location if map is already initialized
+        // Zoom to user location if map is already initialized (this is from button click)
         if (mapInstance.current) {
-          mapInstance.current.setView([newLocation.lat, newLocation.lng], 16, {
+          mapInstance.current.setView([newLocation.lat, newLocation.lng], 18, {
             animate: true,
-            duration: 1.0
+            duration: 1.5
           });
+          
+          // Show a welcome popup for button-triggered location detection
+          L.popup()
+            .setLatLng([newLocation.lat, newLocation.lng])
+            .setContent(`
+              <div class="user-location-popup">
+                <h4>🎯 Location Found!</h4>
+                <p>Welcome to your location</p>
+                <p>Lat: ${newLocation.lat.toFixed(6)}</p>
+                <p>Lng: ${newLocation.lng.toFixed(6)}</p>
+                <small>Click the button again to zoom here anytime</small>
+              </div>
+            `)
+            .openOn(mapInstance.current);
         }
       },
       (error) => {
         console.error('Error getting location:', error);
         setLocationLoading(false);
+        setError('Unable to retrieve your location. Please check your permissions.');
       },
       {
         enableHighAccuracy: true,
@@ -147,12 +180,10 @@ const MapView = ({ publicView = false }) => {
     L.popup()
       .setLatLng([shopLat, shopLng])
       .setContent(`
-        <div style="text-align: center;">
-          <h4 style="margin: 0 0 8px 0; color: #3498db;">🗺️ Directions to ${shopName}</h4>
-          <p style="margin: 4px 0; color: #666;">Distance: ~${distance.toFixed(2)} km</p>
-          <button onclick="window.clearDirections()" 
-                  style="background: #e74c3c; color: white; border: none; padding: 6px 12px; 
-                         border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 8px;">
+        <div class="map-popup">
+          <h4>🗺️ Directions to ${shopName}</h4>
+          <p>Distance: ~${distance.toFixed(2)} km</p>
+          <button onclick="window.clearDirections()" class="map-btn map-btn-danger">
             Clear Directions
           </button>
         </div>
@@ -186,7 +217,6 @@ const MapView = ({ publicView = false }) => {
     
     if (userLocation) {
       // If user location is available, show directions from user location to shop
-      // This will open Google Maps with turn-by-turn navigation
       googleMapsUrl = `https://www.google.com/maps/dir/${userLocation.lat},${userLocation.lng}/${shopLat},${shopLng}/@${shopLat},${shopLng},15z`;
     } else {
       // If no user location, open the shop location for viewing
@@ -213,25 +243,57 @@ const MapView = ({ publicView = false }) => {
     };
     fetchMerchants();
 
-    // Get user location on component mount
+    // Get user location on component mount immediately for better initial view
     if (!publicView) {
-      getCurrentLocation();
+      // Start location detection immediately without loading state for initial view
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const newLocation = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            };
+            setUserLocation(newLocation);
+          },
+          (error) => {
+            console.log('Initial location detection failed, using default location');
+            // Don't set error state for initial load, just use default
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 5000, // Shorter timeout for initial load
+            maximumAge: 300000 // 5 minutes cache
+          }
+        );
+      }
     }
   }, [publicView]);
+
+  // Separate effect to update map view when user location changes
+  useEffect(() => {
+    if (userLocation && mapInstance.current && !publicView) {
+      // If map is already initialized and we just got user location, smoothly transition to it
+      mapInstance.current.setView([userLocation.lat, userLocation.lng], 14, {
+        animate: true,
+        duration: 2.0 // Smooth 2-second transition to user location
+      });
+    }
+  }, [userLocation, publicView]);
 
   useEffect(() => {
     if (loading || !mapRef.current) return;
     
     // Only create the map once
     if (!mapInstance.current) {
+      const defaultLocation = getDefaultLocation();
       const center = userLocation 
         ? [userLocation.lat, userLocation.lng]
         : merchants.length > 0
         ? [merchants[0].latitude, merchants[0].longitude]
-        : [13.0827, 80.2707]; // Default to Chennai, India
+        : defaultLocation.coords; // Use better default location
       
-      // Set higher zoom for better initial view
-      const initialZoom = userLocation ? 14 : merchants.length > 0 ? 13 : 11;
+      // Set better zoom levels for city-level view instead of country-level
+      const initialZoom = userLocation ? 14 : merchants.length > 0 ? 13 : defaultLocation.zoom;
       const map = L.map(mapRef.current).setView(center, initialZoom);
       mapInstance.current = map;
       
@@ -261,25 +323,19 @@ const MapView = ({ publicView = false }) => {
       });
       
       let popupContent = `
-        <div style="min-width: 240px;">
-          <h3 style="margin: 0 0 8px 0; color: #2c3e50;">${merchant.shop_name}</h3>
-          ${merchant.address ? `<p style="margin: 4px 0; color: #666;">${merchant.address}</p>` : ''}
-          ${merchant.owner_name ? `<p style="margin: 4px 0; color: #666;"><strong>Owner:</strong> ${merchant.owner_name}</p>` : ''}
-          ${merchant.phone ? `<p style="margin: 4px 0; color: #666;"><strong>Phone:</strong> ${merchant.phone}</p>` : ''}
-          <div style="margin-top: 12px; display: flex; gap: 6px; flex-wrap: wrap;">
-            <button onclick="window.viewShopProducts(${merchant.id})" 
-                    style="background: #3498db; color: white; border: none; padding: 6px 12px; 
-                           border-radius: 4px; cursor: pointer; font-size: 13px; flex: 1; min-width: 100px;">
+        <div class="shop-popup">
+          <h3>${merchant.shop_name}</h3>
+          ${merchant.address ? `<p>${merchant.address}</p>` : ''}
+          ${merchant.owner_name ? `<p><strong>Owner:</strong> ${merchant.owner_name}</p>` : ''}
+          ${merchant.phone ? `<p><strong>Phone:</strong> ${merchant.phone}</p>` : ''}
+          <div class="popup-buttons">
+            <button onclick="window.viewShopProducts(${merchant.id})" class="map-btn map-btn-primary">
               View Products (${merchant.product_count || 0})
             </button>
-            <button onclick="window.showDirections(${merchant.latitude}, ${merchant.longitude}, '${merchant.shop_name.replace(/'/g, "\\'")}')" 
-                    style="background: #27ae60; color: white; border: none; padding: 6px 12px; 
-                           border-radius: 4px; cursor: pointer; font-size: 13px; flex: 1; min-width: 100px;">
+            <button onclick="window.showDirections(${merchant.latitude}, ${merchant.longitude}, '${merchant.shop_name.replace(/'/g, "\\'")}')" class="map-btn map-btn-success">
               🗺️ Directions
             </button>
-            <button onclick="window.openGoogleMaps(${merchant.latitude}, ${merchant.longitude}, '${merchant.shop_name.replace(/'/g, "\\'")}', '${(merchant.address || '').replace(/'/g, "\\'")}')" 
-                    style="background: #e67e22; color: white; border: none; padding: 6px 12px; 
-                           border-radius: 4px; cursor: pointer; font-size: 13px; flex: 1; min-width: 100px;">
+            <button onclick="window.openGoogleMaps(${merchant.latitude}, ${merchant.longitude}, '${merchant.shop_name.replace(/'/g, "\\'")}', '${(merchant.address || '').replace(/'/g, "\\'")}')" class="map-btn map-btn-warning">
               📍 Google Maps
             </button>
           </div>
@@ -300,17 +356,17 @@ const MapView = ({ publicView = false }) => {
         zIndexOffset: 1000 // Higher z-index for user location
       });
       userMarker.bindPopup(`
-        <div style="text-align: center;">
-          <h4 style="margin: 0 0 8px 0; color: #3498db;">📍 Your Location</h4>
-          <p style="margin: 0; color: #666;">Lat: ${userLocation.lat.toFixed(4)}</p>
-          <p style="margin: 0; color: #666;">Lng: ${userLocation.lng.toFixed(4)}</p>
+        <div class="user-popup">
+          <h4>📍 Your Location</h4>
+          <p>Lat: ${userLocation.lat.toFixed(4)}</p>
+          <p>Lng: ${userLocation.lng.toFixed(4)}</p>
         </div>
       `);
       map._userMarker = userMarker;
       userMarker.addTo(map);
     }
     
-    // Fit bounds to include all markers with smart zoom
+    // Smart bounds fitting - only if we don't have user location centered already
     const allMarkers = [];
     if (merchants.length > 0) {
       allMarkers.push(...merchants.map(m => [m.latitude, m.longitude]));
@@ -319,27 +375,30 @@ const MapView = ({ publicView = false }) => {
       allMarkers.push([userLocation.lat, userLocation.lng]);
     }
     
-    if (allMarkers.length > 0) {
+    // Only fit bounds if we have multiple markers or no user location
+    if (allMarkers.length > 1 && (!userLocation || merchants.length > 3)) {
       const bounds = L.latLngBounds(allMarkers);
       
       // Smart zoom based on number of markers and area
       let maxZoom = 16;
-      if (allMarkers.length === 1) {
-        maxZoom = 15; // Single marker gets closer zoom
-      } else if (allMarkers.length <= 3) {
+      if (allMarkers.length <= 3) {
         maxZoom = 14; // Few markers get medium zoom
+      } else if (allMarkers.length <= 8) {
+        maxZoom = 13; // Several markers get city-level view
       } else {
-        maxZoom = 13; // Many markers get wider view
+        maxZoom = 12; // Many markers get wider city view
       }
       
       map.fitBounds(bounds, { 
         maxZoom: maxZoom,
         padding: [30, 30] // More padding for better visibility
       });
-    } else {
-      // No markers, show Chennai region with good zoom
-      map.setView([13.0827, 80.2707], 11);
+    } else if (allMarkers.length === 0) {
+      // No markers, show default city region with city-level zoom
+      const defaultLocation = getDefaultLocation();
+      map.setView(defaultLocation.coords, defaultLocation.zoom);
     }
+    // If we have user location and few merchants, the map is already centered on user location
     
     // Global functions for shop navigation and directions
     window.viewShopProducts = (merchantId) => {
@@ -380,44 +439,37 @@ const MapView = ({ publicView = false }) => {
 
   if (loading) {
     return (
-      <div style={{ padding: '2rem' }}>
-        <div style={{ marginBottom: '2rem' }}>
-          <SkeletonLoader type="text" lines={1} height="32px" width="200px" />
+      <div className="map-loading-container">
+        <div className="map-loading-header">
+          <div className="skeleton-loader skeleton-text"></div>
         </div>
-        <div style={{ 
-          height: '400px', 
-          border: '1px solid #ddd', 
-          borderRadius: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#f8f9fa'
-        }}>
+        <div className="map-loading-placeholder">
           <LoadingSpinner size="large" color="primary" text="Loading map data..." />
         </div>
       </div>
     );
   }
-  if (error) return <div className="error">{error}</div>;
+  
+  if (error) return <div className="map-error">{error}</div>;
 
   return (
-    <div className="container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <h1 style={{ margin: 0 }}>
+    <div className="map-view-container">
+      <div className="map-header">
+        <h1 className="map-title">
           {publicView ? 'Explore Shops' : 'Shop Locations'}
         </h1>
         
         {!publicView && (
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div className="map-controls">
             <button
               onClick={getCurrentLocation}
               disabled={locationLoading}
-              className="btn btn-secondary"
-              style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
+              className="btn btn-secondary location-btn"
+              title={userLocation ? "Zoom close to your current location (street level view)" : "Find and zoom to your current location"}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div className="btn-content">
                 {locationLoading && <LoadingSpinner size="small" color="white" />}
-                {locationLoading ? 'Getting Location...' : userLocation ? '📍 Zoom to My Location' : '📍 Find My Location'}
+                {locationLoading ? 'Getting Location...' : userLocation ? '� Zoom Close to My Location' : '📍 Find My Location'}
               </div>
             </button>
             
@@ -425,20 +477,13 @@ const MapView = ({ publicView = false }) => {
               <button
                 onClick={clearDirections}
                 className="btn btn-danger"
-                style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
               >
                 🗺️ Clear Directions
               </button>
             )}
             
             {userLocation && (
-              <div style={{ 
-                padding: '0.5rem 1rem', 
-                background: '#e8f4fd', 
-                borderRadius: '4px', 
-                fontSize: '0.8rem',
-                color: '#2c3e50'
-              }}>
+              <div className="location-status">
                 Location found ✓
               </div>
             )}
@@ -446,40 +491,21 @@ const MapView = ({ publicView = false }) => {
         )}
       </div>
 
-      <div style={{ marginBottom: '1rem', padding: '1rem', background: '#f8f9fa', borderRadius: '8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', flexWrap: 'wrap' }}>
+      <div className="map-legend">
+        <div className="legend-items">
           {!publicView && userLocation && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ 
-                width: '24px', 
-                height: '24px', 
-                background: '#3498db', 
-                borderRadius: '50%',
-                border: '3px solid white',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-                animation: 'pulse 2s infinite'
-              }}></div>
-              <span style={{ fontSize: '0.9rem', color: '#2c3e50', fontWeight: 'bold' }}>Your Location</span>
+            <div className="legend-item">
+              <div className="user-location-dot"></div>
+              <span>Your Location</span>
             </div>
           )}
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ 
-              width: '26px', 
-              height: '26px', 
-              background: '#e74c3c', 
-              borderRadius: '50%', 
-              border: '3px solid white',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              fontSize: '12px' 
-            }}>🏪</div>
-            <span style={{ fontSize: '0.9rem', color: '#2c3e50' }}>Shops ({merchants.length})</span>
+          <div className="legend-item">
+            <div className="shop-marker-legend">🏪</div>
+            <span>Shops ({merchants.length})</span>
           </div>
           
-          <div style={{ fontSize: '0.9rem', color: '#666' }}>
+          <div className="legend-hint">
             Click on shop markers to view their products
           </div>
         </div>
