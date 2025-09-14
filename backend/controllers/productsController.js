@@ -1,9 +1,10 @@
 import { getEmbedding } from '../utils/embeddings.js';
+import { enhanceProductDescription } from '../utils/productDescriptionEnhancer.js';
 import pool from '../config/database.js';
 console.log("Loaded productController.js from:", import.meta.url);
 
 const addProduct = async (req, res) => {
-  const { name, price, quantity, description, category } = req.body;
+  const { name, price, quantity, description, category, enhanceDescription = true } = req.body;
 
   if (!name || !price || quantity === undefined) {
     return res.status(400).json({ error: 'Name, price, and quantity are required' });
@@ -20,18 +21,53 @@ const addProduct = async (req, res) => {
     }
     
     const merchantId = merchants[0].id;
-    const embedding = await getEmbedding(name + " " + (description || ""));
+    
+    // Enhance product description and generate category if requested
+    let finalDescription = description || null;
+    let finalCategory = category || null;
+    let descriptionEnhancementInfo = null;
+    
+    if (enhanceDescription) {
+      console.log('🚀 Enhancing product description and generating category for:', name);
+      const enhancementResult = await enhanceProductDescription({
+        name, price, quantity, description, category
+      });
+      
+      finalDescription = enhancementResult.enhancedDescription;
+      finalCategory = enhancementResult.suggestedCategory || category || null;
+      descriptionEnhancementInfo = {
+        originalDescription: enhancementResult.originalDescription,
+        originalCategory: enhancementResult.originalCategory,
+        enhancedDescription: enhancementResult.enhancedDescription,
+        suggestedCategory: enhancementResult.suggestedCategory,
+        categoryGenerated: enhancementResult.categoryGenerated,
+        success: enhancementResult.success,
+        error: enhancementResult.error
+      };
+      
+      console.log('📝 Enhancement result:', descriptionEnhancementInfo);
+    }
+    
+    const embedding = await getEmbedding(name + " " + (finalDescription || ""));
     
     const [result] = await conn.execute(
       'INSERT INTO products (merchant_id, name, price, quantity, description, category, embedding) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [merchantId, name, price, quantity, description || null, category || null, JSON.stringify(embedding)]
+      [merchantId, name, price, quantity, finalDescription, finalCategory, JSON.stringify(embedding)]
     );
     conn.release();
 
     res.status(201).json({ 
       id: result.insertId, 
       message: 'Product added successfully',
-      product: { id: result.insertId, name, price, quantity, description, category }
+      product: { 
+        id: result.insertId, 
+        name, 
+        price, 
+        quantity, 
+        description: finalDescription, 
+        category: finalCategory 
+      },
+      enhancement: descriptionEnhancementInfo
     });
   } catch (err) {
     console.error('Product add failed:', err);
@@ -218,5 +254,33 @@ const getProduct = async (req, res) => {
 };
 
 
-export { addProduct, updateProduct, getMyProducts, deleteProduct, getProduct };
-console.log("Exports in productController.js:", { addProduct, updateProduct, getMyProducts, deleteProduct, getProduct });
+const previewEnhancedDescription = async (req, res) => {
+  const { name, price, quantity, description, category } = req.body;
+
+  if (!name || !price || quantity === undefined) {
+    return res.status(400).json({ error: 'Name, price, and quantity are required for description enhancement' });
+  }
+
+  try {
+    console.log('🔍 Previewing enhanced description and category for:', name);
+    const enhancementResult = await enhanceProductDescription({
+      name, price, quantity, description, category
+    });
+
+    res.json({
+      originalDescription: enhancementResult.originalDescription,
+      originalCategory: enhancementResult.originalCategory,
+      enhancedDescription: enhancementResult.enhancedDescription,
+      suggestedCategory: enhancementResult.suggestedCategory,
+      categoryGenerated: enhancementResult.categoryGenerated,
+      success: enhancementResult.success,
+      error: enhancementResult.error
+    });
+  } catch (err) {
+    console.error('Description enhancement preview failed:', err);
+    res.status(500).json({ error: 'Failed to preview enhanced description', details: err.message });
+  }
+};
+
+export { addProduct, updateProduct, getMyProducts, deleteProduct, getProduct, previewEnhancedDescription };
+console.log("Exports in productController.js:", { addProduct, updateProduct, getMyProducts, deleteProduct, getProduct, previewEnhancedDescription });

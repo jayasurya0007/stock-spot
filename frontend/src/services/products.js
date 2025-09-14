@@ -16,6 +16,11 @@ export const productService = {
     return response.data;
   },
 
+  previewEnhancedDescription: async (productData) => {
+    const response = await api.post('/product/preview-description', productData);
+    return response.data;
+  },
+
   updateProduct: async (productId, productData) => {
     const response = await api.put(`/product/${productId}`, productData);
     return response.data;
