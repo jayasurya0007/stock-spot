@@ -21,8 +21,7 @@ export const searchProducts = async (req, res) => {
 
     const conn = await pool.getConnection();
     
-    // First search: Exact name matches using both original and refined queries
-    // Also break down refined query into individual words for better matching
+    // First search: TRUE exact matches - products that exactly match or start with the search term
     const searchTerms = [query, refinedQuery].filter(term => term && term.trim());
     const refinedWords = refinedQuery ? refinedQuery.toLowerCase().split(/\s+/).filter(word => word.length > 2) : [];
     const allSearchTerms = [...searchTerms, ...refinedWords].filter((term, index, arr) => arr.indexOf(term) === index);
@@ -31,9 +30,12 @@ export const searchProducts = async (req, res) => {
     console.log('Refined words:', refinedWords);
     console.log('All search terms:', allSearchTerms);
     
-    const searchConditions = allSearchTerms.map(() => 'LOWER(p.name) LIKE LOWER(?) OR LOWER(p.description) LIKE LOWER(?) OR LOWER(p.category) LIKE LOWER(?)').join(' OR ');
-    const searchParams = allSearchTerms.flatMap(term => [`%${term}%`, `%${term}%`, `%${term}%`]);
-    console.log('Search parameters:', searchParams);
+    // Create exact match conditions - only match if the product name starts with the term or is the exact term
+    const exactConditions = allSearchTerms.map(() => 
+      '(LOWER(p.name) = LOWER(?) OR LOWER(p.name) LIKE LOWER(?) OR LOWER(p.category) = LOWER(?))'
+    ).join(' OR ');
+    const exactParams = allSearchTerms.flatMap(term => [term, `${term} %`, term]);
+    console.log('Exact match parameters:', exactParams);
     
     const [exactMatches] = await conn.execute(
       `SELECT
@@ -57,7 +59,7 @@ export const searchProducts = async (req, res) => {
        FROM products p
        JOIN merchants m ON p.merchant_id = m.id
        WHERE p.quantity > 0
-         AND (${searchConditions})
+         AND (${exactConditions})
          AND (6371000 * ACOS(
            COS(RADIANS(?)) * COS(RADIANS(m.latitude)) *
            COS(RADIANS(?) - RADIANS(m.longitude)) +
@@ -67,15 +69,65 @@ export const searchProducts = async (req, res) => {
        LIMIT 10;`,
       [
         lat, lng, lat,
-        ...searchParams,
+        ...exactParams,
         lat, lng, lat,
         distance
       ]
     );
 
-    // Second search: Vector similarity for related products (excluding exact matches)
+    // Second search: Partial matches (products that contain the search term but aren't exact matches)
     const exactMatchIds = exactMatches.map(row => row.id);
-    const excludeClause = exactMatchIds.length > 0 ? `AND p.id NOT IN (${exactMatchIds.map(() => '?').join(',')})` : '';
+    const excludeExactClause = exactMatchIds.length > 0 ? `AND p.id NOT IN (${exactMatchIds.map(() => '?').join(',')})` : '';
+    
+    // Create partial match conditions - broader search for products containing the term
+    const partialConditions = allSearchTerms.map(() => 
+      'LOWER(p.name) LIKE LOWER(?) OR LOWER(p.description) LIKE LOWER(?) OR LOWER(p.category) LIKE LOWER(?)'
+    ).join(' OR ');
+    const partialParams = allSearchTerms.flatMap(term => [`%${term}%`, `%${term}%`, `%${term}%`]);
+    
+    const [partialMatches] = await conn.execute(
+      `SELECT
+         p.id,
+         p.name,
+         p.price,
+         p.quantity,
+         p.description,
+         p.category,
+         m.id as merchant_id,
+         m.shop_name,
+         m.latitude,
+         m.longitude,
+         0.5 AS similarity,
+         (6371000 * ACOS(
+           COS(RADIANS(?)) * COS(RADIANS(m.latitude)) *
+           COS(RADIANS(?) - RADIANS(m.longitude)) +
+           SIN(RADIANS(?)) * SIN(RADIANS(m.latitude))
+         )) AS distance,
+         'partial' AS match_type
+       FROM products p
+       JOIN merchants m ON p.merchant_id = m.id
+       WHERE p.quantity > 0
+         AND (${partialConditions})
+         AND (6371000 * ACOS(
+           COS(RADIANS(?)) * COS(RADIANS(m.latitude)) *
+           COS(RADIANS(?) - RADIANS(m.longitude)) +
+           SIN(RADIANS(?)) * SIN(RADIANS(m.latitude))
+         )) <= ?
+         ${excludeExactClause}
+       ORDER BY distance ASC
+       LIMIT 10;`,
+      [
+        lat, lng, lat,
+        ...partialParams,
+        lat, lng, lat,
+        distance,
+        ...exactMatchIds
+      ]
+    );
+
+    // Third search: Vector similarity for semantically related products (excluding exact and partial matches)
+    const allMatchIds = [...exactMatchIds, ...partialMatches.map(row => row.id)];
+    const excludeAllClause = allMatchIds.length > 0 ? `AND p.id NOT IN (${allMatchIds.map(() => '?').join(',')})` : '';
     
     const [similarProducts] = await conn.execute(
       `SELECT
@@ -104,15 +156,15 @@ export const searchProducts = async (req, res) => {
            COS(RADIANS(?) - RADIANS(m.longitude)) +
            SIN(RADIANS(?)) * SIN(RADIANS(m.latitude))
          )) <= ?
-         ${excludeClause}
+         ${excludeAllClause}
        ORDER BY similarity ASC
-       LIMIT 15;`,
+       LIMIT 10;`,
       [
         JSON.stringify(embedding),
         lat, lng, lat,
         lat, lng, lat,
         distance,
-        ...exactMatchIds
+        ...allMatchIds
       ]
     );
 
@@ -120,14 +172,24 @@ export const searchProducts = async (req, res) => {
 
     console.log('📊 Database Results:');
     console.log('Exact matches found:', exactMatches.length);
+    console.log('Partial matches found:', partialMatches.length);
     console.log('Related products found:', similarProducts.length);
     
     if (exactMatches.length > 0) {
-      console.log('Exact match products:', exactMatches.map(p => ({ name: p.name, category: p.category, description: p.description })));
+      console.log('Exact match products:', exactMatches.map(p => ({ name: p.name, category: p.category })));
+    }
+    if (partialMatches.length > 0) {
+      console.log('Partial match products:', partialMatches.map(p => ({ name: p.name, category: p.category })));
     }
 
-    // Combine results with exact matches first
+    // Process results
     const exactResults = exactMatches.map(row => ({
+      ...row,
+      similarity: parseFloat(row.similarity),
+      distance: parseFloat(row.distance)
+    }));
+
+    const partialResults = partialMatches.map(row => ({
       ...row,
       similarity: parseFloat(row.similarity),
       distance: parseFloat(row.distance)
@@ -139,11 +201,14 @@ export const searchProducts = async (req, res) => {
       distance: parseFloat(row.distance)
     }));
 
+    // Combine partial matches with related products for the UI
+    const combinedRelated = [...partialResults, ...relatedResults];
+
     res.json({ 
       refinedQuery,
       exactMatches: exactResults,
-      relatedProducts: relatedResults,
-      results: [...exactResults, ...relatedResults], // Combined for backward compatibility
+      relatedProducts: combinedRelated,
+      results: [...exactResults, ...combinedRelated], // Combined for backward compatibility
       searchType: exactResults.length > 0 ? 'exact_and_related' : 'related_only'
     });
   } catch (err) {
