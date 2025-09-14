@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LoadingSpinner } from '../Loading';
+import  LoadingSpinner from '../Loading/LoadingSpinner';
 import { User } from 'lucide-react';
 
 const Login = () => {
@@ -39,22 +39,22 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-md p-8">
-        <div className="text-center mb-8">
-          <div className="bg-blue-100 w-16 h-16 rounded-xl flex items-center justify-center mx-auto mb-4">
-            <User size={32} className="text-blue-600" />
+      <div className="max-w-md w-full bg-white rounded-xl shadow-md p-6 sm:p-8">
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="bg-blue-100 w-14 h-14 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <User size={28} className="text-blue-600 sm:w-8 sm:h-8" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900">Login to StockSpot</h2>
-          <p className="text-gray-600 mt-2">Welcome back! Please sign in to your account.</p>
+          <p className="text-gray-600 mt-2 text-sm sm:text-base">Welcome back! Please sign in to your account.</p>
         </div>
         
         {error && (
-          <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-6 text-sm">
+          <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-4 sm:mb-6 text-sm">
             {error}
           </div>
         )}
         
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
               Email

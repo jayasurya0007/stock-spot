@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LoadingSpinner } from '../Loading';
+import  LoadingSpinner from "../Loading/LoadingSpinner";
 import { UserPlus } from 'lucide-react';
 
 const Register = () => {
@@ -103,24 +103,24 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
-        <div className="px-8 py-6">
-          <div className="text-center mb-8">
-            <div className="bg-blue-100 w-16 h-16 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <UserPlus size={32} className="text-blue-600" />
+        <div className="px-6 py-6 sm:px-8 sm:py-8">
+          <div className="text-center mb-6 sm:mb-8">
+            <div className="bg-blue-100 w-14 h-14 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <UserPlus size={28} className="text-blue-600 sm:w-8 sm:h-8" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900">Create Account</h2>
-            <p className="text-gray-600 mt-2">Join StockSpot to discover local stores and products</p>
+            <p className="text-gray-600 mt-2 text-sm sm:text-base">Join StockSpot to discover local stores and products</p>
           </div>
           
           {error && (
-            <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-6 text-sm">
+            <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-4 sm:mb-6 text-sm">
               {error}
             </div>
           )}
           
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email
@@ -136,7 +136,7 @@ const Register = () => {
               />
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                   Password
@@ -193,7 +193,7 @@ const Register = () => {
                     </div>
                   )}
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Latitude
@@ -225,7 +225,7 @@ const Register = () => {
                   
                   <button
                     type="button"
-                    className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-all"
+                    className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-all text-sm"
                     onClick={() => {
                       if (navigator.geolocation) {
                         setLocationStatus('Getting your location...');
@@ -279,7 +279,7 @@ const Register = () => {
                       />
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label htmlFor="owner_name" className="block text-sm font-medium text-gray-700 mb-1">
                           Owner Name
