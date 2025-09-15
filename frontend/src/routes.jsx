@@ -15,7 +15,7 @@ import AddProduct from './components/Product/AddProduct';
 import EditProduct from './components/Product/EditProduct';
 import SearchResults from './components/Search/SearchResults';
 import CitySearch from './components/Search/CitySearch';
-import MapView from './components/Map/MapView';
+import LazyMapView from './components/Map/LazyMapView';
 import NotificationSettings from './components/Notification/NotificationSettings';
 
 const ProtectedRoute = ({ children }) => {
@@ -43,11 +43,11 @@ const AppRoutes = () => {
       <Route path="/" element={<Layout />}>
         {/* Public routes for unauthenticated users */}
         {!isAuthenticated && <>
-          <Route index element={<MapView publicView={true} />} />
+          <Route index element={<LazyMapView publicView={true} />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           <Route path="city-search" element={<CitySearch />} />
-          <Route path="*" element={<MapView publicView={true} />} />
+          <Route path="*" element={<LazyMapView publicView={true} />} />
         </>}
         {/* Authenticated routes */}
         {isAuthenticated && <>
@@ -77,7 +77,7 @@ const AppRoutes = () => {
           )}
           <Route path="search" element={<SearchResults />} />
           <Route path="city-search" element={<CitySearch />} />
-          <Route path="map" element={<MapView />} />
+          <Route path="map" element={<LazyMapView />} />
           <Route path="merchant/:id/products" element={<MerchantProducts />} />
           <Route path="*" element={<div className="error">Page not found</div>} />
         </>}

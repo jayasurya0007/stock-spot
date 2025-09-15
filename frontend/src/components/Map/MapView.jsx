@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -16,7 +16,7 @@ const getDefaultLocation = () => {
   };
 };
 
-const MapView = ({ publicView = false }) => {
+const MapView = React.memo(({ publicView = false }) => {
   const [merchants, setMerchants] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -28,8 +28,16 @@ const MapView = ({ publicView = false }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Create custom icons
-  const createShopIcon = () => {
+  // Memoize processed merchant data to prevent unnecessary re-renders
+  const processedMerchants = useMemo(() => {
+    return merchants.map(merchant => ({
+      ...merchant,
+      popupContent: user ? 'authenticated' : 'public'
+    }));
+  }, [merchants, user]);
+
+  // Create custom icons with memoization
+  const shopIcon = useMemo(() => {
     return L.divIcon({
       html: `<div class="bg-blue-600 text-white p-1 rounded-full border-2 border-white shadow-lg">
                <span class="text-sm">🏪</span>
@@ -38,9 +46,9 @@ const MapView = ({ publicView = false }) => {
       iconSize: [32, 32],
       iconAnchor: [16, 16]
     });
-  };
+  }, []);
 
-  const createUserIcon = () => {
+  const userIcon = useMemo(() => {
     return L.divIcon({
       html: `<div class="relative">
                <div class="w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-lg"></div>
@@ -50,9 +58,9 @@ const MapView = ({ publicView = false }) => {
       iconSize: [32, 32],
       iconAnchor: [16, 16]
     });
-  };
+  }, []);
 
-  const zoomToUserLocation = () => {
+  const zoomToUserLocation = useCallback(() => {
     if (userLocation && mapInstance.current) {
       // Clear any existing directions when zooming to user location
       if (directionsRoute) {
@@ -78,7 +86,7 @@ const MapView = ({ publicView = false }) => {
         `)
         .openOn(mapInstance.current);
     }
-  };
+  }, [userLocation, directionsRoute]);
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -138,7 +146,7 @@ const MapView = ({ publicView = false }) => {
     );
   };
 
-  const showDirections = (shopLat, shopLng, shopName) => {
+  const showDirections = useCallback((shopLat, shopLng, shopName) => {
     if (!userLocation) {
       alert('Please enable location access first by clicking "Find My Location"');
       return;
@@ -189,15 +197,15 @@ const MapView = ({ publicView = false }) => {
         </div>
       `)
       .openOn(mapInstance.current);
-  };
+  }, [userLocation, directionsRoute]);
 
-  const clearDirections = () => {
+  const clearDirections = useCallback(() => {
     if (directionsRoute && mapInstance.current) {
       mapInstance.current.removeLayer(directionsRoute);
       setDirectionsRoute(null);
       mapInstance.current.closePopup();
     }
-  };
+  }, [directionsRoute]);
 
   // Helper function to calculate distance between two points
   const calculateDistance = (lat1, lng1, lat2, lng2) => {
@@ -212,7 +220,7 @@ const MapView = ({ publicView = false }) => {
   };
 
   // Function to open Google Maps with navigation
-  const openGoogleMaps = (shopLat, shopLng, shopName, shopAddress) => {
+  const openGoogleMaps = useCallback((shopLat, shopLng, shopName, shopAddress) => {
     let googleMapsUrl;
     
     if (userLocation) {
@@ -228,19 +236,20 @@ const MapView = ({ publicView = false }) => {
     
     // Open in new tab/window
     window.open(googleMapsUrl, '_blank');
-  };
+  }, [userLocation]);
+
+  const fetchMerchants = useCallback(async () => {
+    try {
+      const data = await merchantService.getMapData();
+      setMerchants(data);
+    } catch (err) {
+      setError('Failed to fetch merchants');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchMerchants = async () => {
-      try {
-        const data = await merchantService.getMapData();
-        setMerchants(data);
-      } catch (err) {
-        setError('Failed to fetch merchants');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchMerchants();
 
     // Get user location on component mount immediately for better initial view
@@ -316,9 +325,9 @@ const MapView = ({ publicView = false }) => {
     const markerGroup = L.layerGroup();
     
     // Add shop markers first (they'll be at lower z-index)
-    merchants.forEach(merchant => {
+    processedMerchants.forEach(merchant => {
       const marker = L.marker([merchant.latitude, merchant.longitude], {
-        icon: createShopIcon(),
+        icon: shopIcon,
         zIndexOffset: 100 // Lower z-index for shop markers
       });
       
@@ -370,7 +379,7 @@ const MapView = ({ publicView = false }) => {
     // Add user location marker last (it'll be on top)
     if (userLocation) {
       const userMarker = L.marker([userLocation.lat, userLocation.lng], {
-        icon: createUserIcon(),
+        icon: userIcon,
         zIndexOffset: 1000 // Higher z-index for user location
       });
       userMarker.bindPopup(`
@@ -386,15 +395,15 @@ const MapView = ({ publicView = false }) => {
     
     // Smart bounds fitting - only if we don't have user location centered already
     const allMarkers = [];
-    if (merchants.length > 0) {
-      allMarkers.push(...merchants.map(m => [m.latitude, m.longitude]));
+    if (processedMerchants.length > 0) {
+      allMarkers.push(...processedMerchants.map(m => [m.latitude, m.longitude]));
     }
     if (userLocation) {
       allMarkers.push([userLocation.lat, userLocation.lng]);
     }
     
     // Only fit bounds if we have multiple markers or no user location
-    if (allMarkers.length > 1 && (!userLocation || merchants.length > 3)) {
+    if (allMarkers.length > 1 && (!userLocation || processedMerchants.length > 3)) {
       const bounds = L.latLngBounds(allMarkers);
       
       // Smart zoom based on number of markers and area
@@ -453,7 +462,7 @@ const MapView = ({ publicView = false }) => {
       delete window.clearDirections;
       delete window.openGoogleMaps;
     };
-  }, [loading, merchants, userLocation, navigate]);
+  }, [loading, processedMerchants, userLocation, navigate, user, shopIcon, userIcon, showDirections, clearDirections, openGoogleMaps]);
 
   if (loading) {
     return (
@@ -545,6 +554,6 @@ const MapView = ({ publicView = false }) => {
       </div>
     </div>
   );
-};
+});
 
 export default MapView;
