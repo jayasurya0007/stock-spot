@@ -1,6 +1,10 @@
 # StockSpot - Agentic AI for Local Commerce
 
-## 🚀 Live Demo & Repository
+## � Quick Overview
+
+**StockSpot** transforms local commerce by connecting customers with nearby product inventory through **multi-step AI workflows**. Our agentic AI system chains intelligent operations: first understanding natural language queries ("I need a phone charger"), then semantically matching them with enhanced product descriptions, and finally providing location-aware results with directions and merchant details. Each AI agent performs at least 2-3 chained steps - from query understanding and product enhancement to semantic search and notification intelligence - creating a seamless experience that helps customers find products instantly while boosting small merchant visibility and sales in the real economy.
+
+## �🚀 Live Demo & Repository
 
 - **🌐 Live Application**: [stock-spot.vercel.app](https://stock-spot.vercel.app)
 - **🔗 GitHub Repository**: [github.com/jayasurya0007/stock-spot](https://github.com/jayasurya0007/stock-spot)
@@ -59,7 +63,7 @@ StockSpot revolutionizes local commerce through **Agentic AI** systems that:
 
 ## 🎬 Demo Video
 
-**📹 Comprehensive 4-minute demonstration**: [Demo Video Link](https://your-demo-video-link.com)
+**📹 Comprehensive 4-minute demonstration**: [Demo Video Link](https://youtu.be/4rll7-k7gMI)
 
 ### Video Highlights:
 - **Live Platform Demo**: Real search and merchant workflows
@@ -69,6 +73,9 @@ StockSpot revolutionizes local commerce through **Agentic AI** systems that:
 - **Business Impact**: Real merchant testimonials and usage
 
 ## 🧠 Agentic AI Architecture
+
+### **Multi-Step Workflow Statement**
+**Every AI agent in StockSpot implements multi-step chained workflows** - no single-step operations. Each agent performs a minimum of 2-3 sequential steps with error handling, data transformation, and result validation. From query refinement → vector embedding → similarity search, to product analysis → content generation → database storage, our agentic architecture ensures sophisticated AI reasoning rather than simple API calls.
 
 ### **Core Agentic AI Workflows** 
 
@@ -283,6 +290,18 @@ Open-source project welcoming contributions! Fork → Feature Branch → Pull Re
 - Vector search optimization  
 - Mobile experience improvements
 - Business intelligence features
+
+## ✅ Submission Checklist
+
+| **Requirement** | **Status** | **Details** |
+|---|---|---|
+| **TiDB Email** | ✅ **Complete** | jayasuryar849@gmail.com |
+| **GitHub Repository** | ✅ **Complete** | [github.com/jayasurya0007/stock-spot](https://github.com/jayasurya0007/stock-spot) |
+| **Demo Video** | ✅ **Complete** | [Live Demo Available](https://stock-spot.vercel.app) |
+| **Run Instructions** | ✅ **Complete** | Full setup guide with backend & frontend |
+| **Project Summary** | ✅ **Complete** | Agentic AI for local commerce with multi-step workflows |
+| **TiDB Integration** | ✅ **Complete** | Vector search, Cloud SQL, Embeddings |
+| **Multi-Step AI** | ✅ **Complete** | Every agent chains 2+ operations minimum |
 
 ## 🙏 Acknowledgments
 
