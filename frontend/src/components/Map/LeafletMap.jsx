@@ -1,21 +1,18 @@
 import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import '../../styles/MapView.css';
 
-const LeafletMap = React.forwardRef(({ center, markers }, ref) => {
+// Fix for default markers in Leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+const LeafletMap = React.forwardRef(({ center, markers, className = "" }, ref) => {
   const containerRef = useRef(null);
   const mapInstance = useRef(null);
-
-  // Fix for default markers in Leaflet
-  useEffect(() => {
-    delete L.Icon.Default.prototype._getIconUrl;
-    L.Icon.Default.mergeOptions({
-      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-    });
-  }, []);
 
   // Expose setView to parent via ref
   React.useImperativeHandle(ref, () => ({
@@ -59,7 +56,7 @@ const LeafletMap = React.forwardRef(({ center, markers }, ref) => {
   return (
     <div 
       ref={containerRef} 
-      className="map-container"
+      className={`w-full h-full rounded-lg overflow-hidden ${className}`}
     />
   );
 });

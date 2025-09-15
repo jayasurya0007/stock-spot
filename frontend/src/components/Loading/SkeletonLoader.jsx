@@ -1,5 +1,6 @@
+// SkeletonLoader.js
 import React from 'react';
-import './SkeletonLoader.css';
+import './Loading.css';
 
 const SkeletonLoader = ({ 
   type = 'text', 
@@ -17,7 +18,7 @@ const SkeletonLoader = ({
             {Array.from({ length: lines }).map((_, index) => (
               <div
                 key={index}
-                className={`skeleton-line ${animated ? 'skeleton-animated' : ''}`}
+                className={`skeleton-line ${animated ? 'animated' : ''}`}
                 style={{
                   width: index === lines - 1 ? '75%' : width,
                   height
@@ -29,7 +30,7 @@ const SkeletonLoader = ({
       
       case 'card':
         return (
-          <div className={`skeleton-card ${animated ? 'skeleton-animated' : ''}`}>
+          <div className={`skeleton-card ${animated ? 'animated' : ''}`}>
             <div className="skeleton-card-header" />
             <div className="skeleton-card-body">
               <div className="skeleton-line" style={{ width: '80%' }} />
@@ -43,7 +44,7 @@ const SkeletonLoader = ({
         return (
           <div className="skeleton-list">
             {Array.from({ length: lines || 5 }).map((_, index) => (
-              <div key={index} className={`skeleton-list-item ${animated ? 'skeleton-animated' : ''}`}>
+              <div key={index} className={`skeleton-list-item ${animated ? 'animated' : ''}`}>
                 <div className="skeleton-avatar" />
                 <div className="skeleton-list-content">
                   <div className="skeleton-line" style={{ width: '70%' }} />
@@ -59,13 +60,13 @@ const SkeletonLoader = ({
           <div className="skeleton-table">
             <div className="skeleton-table-header">
               {Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className={`skeleton-table-cell ${animated ? 'skeleton-animated' : ''}`} />
+                <div key={index} className={`skeleton-table-cell ${animated ? 'animated' : ''}`} />
               ))}
             </div>
             {Array.from({ length: lines || 5 }).map((_, rowIndex) => (
               <div key={rowIndex} className="skeleton-table-row">
                 {Array.from({ length: 4 }).map((_, cellIndex) => (
-                  <div key={cellIndex} className={`skeleton-table-cell ${animated ? 'skeleton-animated' : ''}`} />
+                  <div key={cellIndex} className={`skeleton-table-cell ${animated ? 'animated' : ''}`} />
                 ))}
               </div>
             ))}
@@ -75,7 +76,7 @@ const SkeletonLoader = ({
       case 'avatar':
         return (
           <div 
-            className={`skeleton-avatar ${animated ? 'skeleton-animated' : ''}`} 
+            className={`skeleton-avatar ${animated ? 'animated' : ''}`} 
             style={{ width, height }}
           />
         );
@@ -83,7 +84,7 @@ const SkeletonLoader = ({
       case 'button':
         return (
           <div 
-            className={`skeleton-button ${animated ? 'skeleton-animated' : ''}`} 
+            className={`skeleton-button ${animated ? 'animated' : ''}`} 
             style={{ width, height }}
           />
         );
@@ -91,7 +92,7 @@ const SkeletonLoader = ({
       default:
         return (
           <div 
-            className={`skeleton-line ${animated ? 'skeleton-animated' : ''}`} 
+            className={`skeleton-line ${animated ? 'animated' : ''}`} 
             style={{ width, height }}
           />
         );

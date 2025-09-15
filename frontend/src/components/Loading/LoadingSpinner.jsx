@@ -1,5 +1,6 @@
+// LoadingSpinner.js
 import React from 'react';
-import './LoadingSpinner.css';
+import './Loading.css';
 
 const LoadingSpinner = ({ 
   size = 'medium', 
@@ -9,36 +10,10 @@ const LoadingSpinner = ({
   overlay = false,
   fullPage = false 
 }) => {
-  const sizeClasses = {
-    small: 'spinner-sm',
-    medium: 'spinner-md',
-    large: 'spinner-lg'
-  };
-
-  const colorClasses = {
-    primary: 'spinner-primary',
-    secondary: 'spinner-secondary',
-    white: 'spinner-white',
-    dark: 'spinner-dark'
-  };
-
-  const spinnerClasses = [
-    'loading-spinner',
-    sizeClasses[size] || sizeClasses.medium,
-    colorClasses[color] || colorClasses.primary
-  ].join(' ');
-
-  const containerClasses = [
-    'spinner-container',
-    centered && 'spinner-centered',
-    overlay && 'spinner-overlay',
-    fullPage && 'spinner-fullpage'
-  ].filter(Boolean).join(' ');
-
   return (
-    <div className={containerClasses}>
+    <div className={`loading-container ${centered ? 'centered' : ''} ${overlay ? 'overlay' : ''} ${fullPage ? 'full-page' : ''}`}>
       <div className="spinner-content">
-        <div className={spinnerClasses}></div>
+        <div className={`spinner ${size} ${color}`}></div>
         {text && <p className="spinner-text">{text}</p>}
       </div>
     </div>

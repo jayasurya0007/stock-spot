@@ -1,6 +1,7 @@
+// PageLoader.js
 import React from 'react';
 import LoadingSpinner from './LoadingSpinner';
-import './PageLoader.css';
+import './Loading.css';
 
 const PageLoader = ({ 
   message = 'Loading...', 
@@ -10,7 +11,7 @@ const PageLoader = ({
   showLogo = true 
 }) => {
   return (
-    <div className="page-loader">
+    <div className="page-loader full-page overlay">
       <div className="page-loader-content">
         {showLogo && (
           <div className="page-loader-logo">

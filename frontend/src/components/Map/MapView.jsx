@@ -4,12 +4,10 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { merchantService } from '../../services/merchants';
 import { LoadingSpinner } from '../Loading';
-import '../../styles/MapView.css';
+import { MapPin, Navigation, ExternalLink, ZoomIn, X } from 'lucide-react';
 
 // Better default locations for major Indian cities (city-level zoom)
 const getDefaultLocation = () => {
-  // You can enhance this to detect user's timezone or use IP-based location
-  // For now, using Chennai as default but with better zoom
   return {
     coords: [13.0827, 80.2707], // Chennai
     zoom: 13,
@@ -31,9 +29,9 @@ const MapView = ({ publicView = false }) => {
   // Create custom icons
   const createShopIcon = () => {
     return L.divIcon({
-      html: `<div class="shop-marker">
-        <span>🏪</span>
-      </div>`,
+      html: `<div class="bg-blue-600 text-white p-1 rounded-full border-2 border-white shadow-lg">
+               <span class="text-sm">🏪</span>
+             </div>`,
       className: 'custom-shop-marker',
       iconSize: [32, 32],
       iconAnchor: [16, 16]
@@ -42,10 +40,10 @@ const MapView = ({ publicView = false }) => {
 
   const createUserIcon = () => {
     return L.divIcon({
-      html: `<div class="user-marker">
-        <div class="user-location-dot"></div>
-        <div class="user-location-pulse"></div>
-      </div>`,
+      html: `<div class="relative">
+               <div class="w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-lg"></div>
+               <div class="absolute inset-0 animate-ping bg-blue-400 rounded-full opacity-75"></div>
+             </div>`,
       className: 'custom-user-marker',
       iconSize: [32, 32],
       iconAnchor: [16, 16]
@@ -69,11 +67,11 @@ const MapView = ({ publicView = false }) => {
       L.popup()
         .setLatLng([userLocation.lat, userLocation.lng])
         .setContent(`
-          <div class="user-location-popup">
-            <h4>📍 Your Current Location</h4>
-            <p>Lat: ${userLocation.lat.toFixed(6)}</p>
-            <p>Lng: ${userLocation.lng.toFixed(6)}</p>
-            <small>Zoomed to street level view</small>
+          <div class="p-2">
+            <h4 class="font-bold text-gray-900">📍 Your Current Location</h4>
+            <p class="text-sm">Lat: ${userLocation.lat.toFixed(6)}</p>
+            <p class="text-sm">Lng: ${userLocation.lng.toFixed(6)}</p>
+            <small class="text-xs text-gray-500">Zoomed to street level view</small>
           </div>
         `)
         .openOn(mapInstance.current);
@@ -114,12 +112,12 @@ const MapView = ({ publicView = false }) => {
           L.popup()
             .setLatLng([newLocation.lat, newLocation.lng])
             .setContent(`
-              <div class="user-location-popup">
-                <h4>🎯 Location Found!</h4>
-                <p>Welcome to your location</p>
-                <p>Lat: ${newLocation.lat.toFixed(6)}</p>
-                <p>Lng: ${newLocation.lng.toFixed(6)}</p>
-                <small>Click the button again to zoom here anytime</small>
+              <div class="p-2">
+                <h4 class="font-bold text-gray-900">🎯 Location Found!</h4>
+                <p class="text-sm">Welcome to your location</p>
+                <p class="text-sm">Lat: ${newLocation.lat.toFixed(6)}</p>
+                <p class="text-sm">Lng: ${newLocation.lng.toFixed(6)}</p>
+                <small class="text-xs text-gray-500">Click the button again to zoom here anytime</small>
               </div>
             `)
             .openOn(mapInstance.current);
@@ -180,10 +178,10 @@ const MapView = ({ publicView = false }) => {
     L.popup()
       .setLatLng([shopLat, shopLng])
       .setContent(`
-        <div class="map-popup">
-          <h4>🗺️ Directions to ${shopName}</h4>
-          <p>Distance: ~${distance.toFixed(2)} km</p>
-          <button onclick="window.clearDirections()" class="map-btn map-btn-danger">
+        <div class="p-3">
+          <h4 class="font-bold text-gray-900 mb-2">🗺️ Directions to ${shopName}</h4>
+          <p class="text-sm mb-3">Distance: ~${distance.toFixed(2)} km</p>
+          <button onclick="window.clearDirections()" class="w-full bg-red-600 text-white py-1 px-3 rounded text-sm hover:bg-red-700">
             Clear Directions
           </button>
         </div>
@@ -323,19 +321,19 @@ const MapView = ({ publicView = false }) => {
       });
       
       let popupContent = `
-        <div class="shop-popup">
-          <h3>${merchant.shop_name}</h3>
-          ${merchant.address ? `<p>${merchant.address}</p>` : ''}
-          ${merchant.owner_name ? `<p><strong>Owner:</strong> ${merchant.owner_name}</p>` : ''}
-          ${merchant.phone ? `<p><strong>Phone:</strong> ${merchant.phone}</p>` : ''}
-          <div class="popup-buttons">
-            <button onclick="window.viewShopProducts(${merchant.id})" class="map-btn map-btn-primary">
+        <div class="p-3 max-w-xs">
+          <h3 class="font-bold text-gray-900 mb-2">${merchant.shop_name}</h3>
+          ${merchant.address ? `<p class="text-sm text-gray-600 mb-2">${merchant.address}</p>` : ''}
+          ${merchant.owner_name ? `<p class="text-sm"><strong>Owner:</strong> ${merchant.owner_name}</p>` : ''}
+          ${merchant.phone ? `<p class="text-sm"><strong>Phone:</strong> ${merchant.phone}</p>` : ''}
+          <div class="mt-3 space-y-2">
+            <button onclick="window.viewShopProducts(${merchant.id})" class="w-full bg-blue-600 text-white py-1 px-3 rounded text-sm hover:bg-blue-700">
               View Products (${merchant.product_count || 0})
             </button>
-            <button onclick="window.showDirections(${merchant.latitude}, ${merchant.longitude}, '${merchant.shop_name.replace(/'/g, "\\'")}')" class="map-btn map-btn-success">
+            <button onclick="window.showDirections(${merchant.latitude}, ${merchant.longitude}, '${merchant.shop_name.replace(/'/g, "\\'")}')" class="w-full bg-green-600 text-white py-1 px-3 rounded text-sm hover:bg-green-700">
               🗺️ Directions
             </button>
-            <button onclick="window.openGoogleMaps(${merchant.latitude}, ${merchant.longitude}, '${merchant.shop_name.replace(/'/g, "\\'")}', '${(merchant.address || '').replace(/'/g, "\\'")}')" class="map-btn map-btn-warning">
+            <button onclick="window.openGoogleMaps(${merchant.latitude}, ${merchant.longitude}, '${merchant.shop_name.replace(/'/g, "\\'")}', '${(merchant.address || '').replace(/'/g, "\\'")}')" class="w-full bg-yellow-500 text-white py-1 px-3 rounded text-sm hover:bg-yellow-600">
               📍 Google Maps
             </button>
           </div>
@@ -356,10 +354,10 @@ const MapView = ({ publicView = false }) => {
         zIndexOffset: 1000 // Higher z-index for user location
       });
       userMarker.bindPopup(`
-        <div class="user-popup">
-          <h4>📍 Your Location</h4>
-          <p>Lat: ${userLocation.lat.toFixed(4)}</p>
-          <p>Lng: ${userLocation.lng.toFixed(4)}</p>
+        <div class="p-2">
+          <h4 class="font-bold text-gray-900">📍 Your Location</h4>
+          <p class="text-sm">Lat: ${userLocation.lat.toFixed(4)}</p>
+          <p class="text-sm">Lng: ${userLocation.lng.toFixed(4)}</p>
         </div>
       `);
       map._userMarker = userMarker;
@@ -439,79 +437,92 @@ const MapView = ({ publicView = false }) => {
 
   if (loading) {
     return (
-      <div className="map-loading-container">
-        <div className="map-loading-header">
-          <div className="skeleton-loader skeleton-text"></div>
-        </div>
-        <div className="map-loading-placeholder">
-          <LoadingSpinner size="large" color="primary" text="Loading map data..." />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <LoadingSpinner size="large" text="Loading map data..." />
         </div>
       </div>
     );
   }
   
-  if (error) return <div className="map-error">{error}</div>;
-
-  return (
-    <div className="map-view-container">
-      <div className="map-header">
-        <h1 className="map-title">
-          {publicView ? 'Explore Shops' : 'Shop Locations'}
-        </h1>
-        
-        {!publicView && (
-          <div className="map-controls">
-            <button
-              onClick={getCurrentLocation}
-              disabled={locationLoading}
-              className="btn btn-secondary location-btn"
-              title={userLocation ? "Zoom close to your current location (street level view)" : "Find and zoom to your current location"}
-            >
-              <div className="btn-content">
-                {locationLoading && <LoadingSpinner size="small" color="white" />}
-                {locationLoading ? 'Getting Location...' : userLocation ? '� Zoom Close to My Location' : '📍 Find My Location'}
-              </div>
-            </button>
-            
-            {directionsRoute && (
-              <button
-                onClick={clearDirections}
-                className="btn btn-danger"
-              >
-                🗺️ Clear Directions
-              </button>
-            )}
-            
-            {userLocation && (
-              <div className="location-status">
-                Location found ✓
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      <div className="map-legend">
-        <div className="legend-items">
-          {!publicView && userLocation && (
-            <div className="legend-item">
-              <div className="user-location-dot"></div>
-              <span>Your Location</span>
-            </div>
-          )}
-          
-          <div className="legend-item">
-            <div className="shop-marker-legend">🏪</div>
-            <span>Shops ({merchants.length})</span>
-          </div>
-          
-          <div className="legend-hint">
-            Click on shop markers to view their products
-          </div>
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-red-50 text-red-700 p-4 rounded-lg max-w-md">
+          {error}
         </div>
       </div>
+    );
+  }
 
-      <div className="map-container" ref={mapRef} />
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+            <h1 className="text-2xl font-bold text-gray-900">
+              {publicView ? 'Explore Shops' : 'Shop Locations'}
+            </h1>
+            
+            {!publicView && (
+              <div className="flex flex-col sm:flex-row gap-3">
+                {directionsRoute && (
+                  <button
+                    onClick={clearDirections}
+                    className="flex items-center justify-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors"
+                  >
+                    <X size={16} />
+                    Clear Directions
+                  </button>
+                )}
+                
+                <button
+                  onClick={getCurrentLocation}
+                  disabled={locationLoading}
+                  className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  title={userLocation ? "Zoom close to your current location (street level view)" : "Find and zoom to your current location"}
+                >
+                  {locationLoading ? (
+                    <LoadingSpinner size="small" color="white" />
+                  ) : (
+                    <Navigation size={16} />
+                  )}
+                  {locationLoading ? 'Getting Location...' : userLocation ? 'Zoom to My Location' : 'Find My Location'}
+                </button>
+                
+                {userLocation && (
+                  <div className="bg-green-100 text-green-800 px-3 py-2 rounded-lg text-sm flex items-center">
+                    <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                    Location found
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-4 items-center text-sm text-gray-600">
+            {!publicView && userLocation && (
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+                <span>Your Location</span>
+              </div>
+            )}
+            
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs">🏪</div>
+              <span>Shops ({merchants.length})</span>
+            </div>
+            
+            <div className="text-gray-500">
+              Click on shop markers to view their products
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-md overflow-hidden">
+          <div ref={mapRef} className="w-full h-96 sm:h-[500px] lg:h-[600px]" />
+        </div>
+      </div>
     </div>
   );
 };
