@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Navigation, MapPin } from 'lucide-react';
+import { Navigation, MapPin, AlertCircle } from 'lucide-react';
+import { getCurrentLocation, popularCityCoordinates } from '../../utils/geolocation';
+import MobileAlert from '../UI/MobileAlert';
 
 const SearchBar = ({ onSearch }) => {
   const [query, setQuery] = useState('');
@@ -8,12 +10,21 @@ const SearchBar = ({ onSearch }) => {
   const [distance, setDistance] = useState('5');
   const [distanceUnit, setDistanceUnit] = useState('km');
   const [gettingLocation, setGettingLocation] = useState(false);
+  const [locationError, setLocationError] = useState('');
+  const [showCitySelector, setShowCitySelector] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({});
 
   const handleSubmit = (e) => {
     e.preventDefault();
     
     if (!query || !lat || !lng || !distance) {
-      alert('Please fill in all fields');
+      setAlertConfig({
+        type: 'error',
+        title: 'Missing Information',
+        message: 'Please fill in all fields:\n• Product name\n• Your location (latitude & longitude)\n• Search distance'
+      });
+      setShowAlert(true);
       return;
     }
     
@@ -30,42 +41,34 @@ const SearchBar = ({ onSearch }) => {
     });
   };
 
-  const handleUseCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      alert('Geolocation is not supported by this browser');
-      return;
+  const handleUseCurrentLocation = async () => {
+    try {
+      setGettingLocation(true);
+      setLocationError('');
+      
+      const location = await getCurrentLocation();
+      
+      setLat(location.latitude.toString());
+      setLng(location.longitude.toString());
+      setGettingLocation(false);
+      setShowCitySelector(false);
+    } catch (error) {
+      setGettingLocation(false);
+      setLocationError(error.userMessage);
+      
+      // Show city selector as fallback
+      setShowCitySelector(true);
     }
+  };
 
-    setGettingLocation(true);
-    
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setLat(position.coords.latitude.toString());
-        setLng(position.coords.longitude.toString());
-        setGettingLocation(false);
-      },
-      (error) => {
-        let errorMessage = 'Unable to get your location';
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage = 'Location access denied by user';
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMessage = 'Location information is unavailable';
-            break;
-          case error.TIMEOUT:
-            errorMessage = 'Location request timed out';
-            break;
-        }
-        alert(errorMessage);
-        setGettingLocation(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000 // 5 minutes
-      }
-    );
+  const handleCitySelect = (cityKey) => {
+    const city = popularCityCoordinates[cityKey];
+    if (city) {
+      setLat(city.lat.toString());
+      setLng(city.lng.toString());
+      setLocationError('');
+      setShowCitySelector(false);
+    }
   };
 
   return (
@@ -125,22 +128,63 @@ const SearchBar = ({ onSearch }) => {
           <button 
             type="button" 
             onClick={handleUseCurrentLocation}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
             disabled={gettingLocation}
           >
             {gettingLocation ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                 <span>Getting Location...</span>
               </>
             ) : (
               <>
                 <Navigation size={16} />
-                <span>Use Current Location</span>
+                <span>Use My Current Location</span>
               </>
             )}
           </button>
         </div>
+
+        {/* Location Error Message */}
+        {locationError && (
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle size={20} className="text-orange-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h4 className="font-medium text-orange-900 mb-2">Location Access Issue</h4>
+                <p className="text-sm text-orange-800 mb-3 whitespace-pre-line">{locationError}</p>
+                <button
+                  type="button"
+                  onClick={() => setShowCitySelector(!showCitySelector)}
+                  className="text-sm bg-orange-600 text-white px-3 py-1 rounded font-medium hover:bg-orange-700 transition-colors"
+                >
+                  {showCitySelector ? 'Hide' : 'Choose'} Popular Cities
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* City Selector */}
+        {showCitySelector && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="font-medium text-blue-900 mb-3">📍 Select Your City</h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {Object.keys(popularCityCoordinates).map((cityKey) => (
+                <button
+                  key={cityKey}
+                  type="button"
+                  onClick={() => handleCitySelect(cityKey)}
+                  className="text-left p-2 bg-white border border-blue-200 rounded hover:bg-blue-100 transition-colors text-sm"
+                >
+                  <div className="font-medium text-blue-900">{cityKey}</div>
+                  <div className="text-xs text-blue-600">{popularCityCoordinates[cityKey].name}</div>
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-blue-600 mt-2">Don't see your city? Enter coordinates manually above.</p>
+          </div>
+        )}
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -183,6 +227,16 @@ const SearchBar = ({ onSearch }) => {
           Search Products
         </button>
       </form>
+
+      {/* Mobile-friendly Alert */}
+      <MobileAlert
+        type={alertConfig.type}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        isOpen={showAlert}
+        onClose={() => setShowAlert(false)}
+        actions={alertConfig.actions}
+      />
     </div>
   );
 };

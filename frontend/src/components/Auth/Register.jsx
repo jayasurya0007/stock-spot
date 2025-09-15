@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import  LoadingSpinner from "../Loading/LoadingSpinner";
-import { UserPlus } from 'lucide-react';
+import { UserPlus, AlertCircle } from 'lucide-react';
+import { getCurrentLocation } from '../../utils/geolocation';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -32,23 +33,27 @@ const Register = () => {
     });
     // If merchant role selected, try to get location
     if (e.target.name === 'role' && e.target.value === 'merchant') {
-      if (navigator.geolocation) {
-        setLocationLoading(true);
-        setLocationStatus('Getting your location...');
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            setFormData(f => ({ ...f, latitude: pos.coords.latitude, longitude: pos.coords.longitude }));
-            setLocationStatus('Location detected ✓');
-            setLocationLoading(false);
-          },
-          () => {
-            setLocationStatus('Failed to get location');
-            setLocationLoading(false);
-          }
-        );
-      } else {
-        setLocationStatus('Geolocation not supported');
-      }
+      handleGetLocation();
+    }
+  };
+
+  const handleGetLocation = async () => {
+    try {
+      setLocationLoading(true);
+      setLocationStatus('Getting your location...');
+      
+      const location = await getCurrentLocation();
+      
+      setFormData(f => ({ 
+        ...f, 
+        latitude: location.latitude, 
+        longitude: location.longitude 
+      }));
+      setLocationStatus('Location detected ✓');
+      setLocationLoading(false);
+    } catch (error) {
+      setLocationStatus(`Location error: ${error.userMessage}`);
+      setLocationLoading(false);
     }
   };
 
@@ -225,23 +230,11 @@ const Register = () => {
                   
                   <button
                     type="button"
-                    className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-all text-sm"
-                    onClick={() => {
-                      if (navigator.geolocation) {
-                        setLocationStatus('Getting your location...');
-                        navigator.geolocation.getCurrentPosition(
-                          (pos) => {
-                            setFormData(f => ({ ...f, latitude: pos.coords.latitude, longitude: pos.coords.longitude }));
-                            setLocationStatus('Location detected ✓');
-                          },
-                          () => setLocationStatus('Failed to get location')
-                        );
-                      } else {
-                        setLocationStatus('Geolocation not supported');
-                      }
-                    }}
+                    className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition-all text-sm disabled:opacity-50"
+                    onClick={handleGetLocation}
+                    disabled={locationLoading}
                   >
-                    Use My Current Location
+                    {locationLoading ? 'Getting Location...' : 'Use My Current Location'}
                   </button>
                   
                   {/* Merchant Information Fields */}
