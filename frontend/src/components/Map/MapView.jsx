@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import { merchantService } from '../../services/merchants';
 import { LoadingSpinner } from '../Loading';
 import { MapPin, Navigation, ExternalLink, ZoomIn, X } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 // Better default locations for major Indian cities (city-level zoom)
 const getDefaultLocation = () => {
@@ -25,6 +26,7 @@ const MapView = ({ publicView = false }) => {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Create custom icons
   const createShopIcon = () => {
@@ -320,25 +322,43 @@ const MapView = ({ publicView = false }) => {
         zIndexOffset: 100 // Lower z-index for shop markers
       });
       
-      let popupContent = `
-        <div class="p-3 max-w-xs">
-          <h3 class="font-bold text-gray-900 mb-2">${merchant.shop_name}</h3>
-          ${merchant.address ? `<p class="text-sm text-gray-600 mb-2">${merchant.address}</p>` : ''}
-          ${merchant.owner_name ? `<p class="text-sm"><strong>Owner:</strong> ${merchant.owner_name}</p>` : ''}
-          ${merchant.phone ? `<p class="text-sm"><strong>Phone:</strong> ${merchant.phone}</p>` : ''}
-          <div class="mt-3 space-y-2">
-            <button onclick="window.viewShopProducts(${merchant.id})" class="w-full bg-blue-600 text-white py-1 px-3 rounded text-sm hover:bg-blue-700">
-              View Products (${merchant.product_count || 0})
-            </button>
-            <button onclick="window.showDirections(${merchant.latitude}, ${merchant.longitude}, '${merchant.shop_name.replace(/'/g, "\\'")}')" class="w-full bg-green-600 text-white py-1 px-3 rounded text-sm hover:bg-green-700">
-              🗺️ Directions
-            </button>
-            <button onclick="window.openGoogleMaps(${merchant.latitude}, ${merchant.longitude}, '${merchant.shop_name.replace(/'/g, "\\'")}', '${(merchant.address || '').replace(/'/g, "\\'")}')" class="w-full bg-yellow-500 text-white py-1 px-3 rounded text-sm hover:bg-yellow-600">
-              📍 Google Maps
-            </button>
+      let popupContent;
+      
+      if (user) {
+        // Full popup for authenticated users
+        popupContent = `
+          <div class="p-3 max-w-xs">
+            <h3 class="font-bold text-gray-900 mb-2">${merchant.shop_name}</h3>
+            ${merchant.address ? `<p class="text-sm text-gray-600 mb-2">${merchant.address}</p>` : ''}
+            ${merchant.owner_name ? `<p class="text-sm"><strong>Owner:</strong> ${merchant.owner_name}</p>` : ''}
+            ${merchant.phone ? `<p class="text-sm"><strong>Phone:</strong> ${merchant.phone}</p>` : ''}
+            <div class="mt-3 space-y-2">
+              <button onclick="window.viewShopProducts(${merchant.id})" class="w-full bg-blue-600 text-white py-1 px-3 rounded text-sm hover:bg-blue-700">
+                View Products (${merchant.product_count || 0})
+              </button>
+              <button onclick="window.showDirections(${merchant.latitude}, ${merchant.longitude}, '${merchant.shop_name.replace(/'/g, "\\'")}')" class="w-full bg-green-600 text-white py-1 px-3 rounded text-sm hover:bg-green-700">
+                🗺️ Directions
+              </button>
+              <button onclick="window.openGoogleMaps(${merchant.latitude}, ${merchant.longitude}, '${merchant.shop_name.replace(/'/g, "\\'")}', '${(merchant.address || '').replace(/'/g, "\\'")}')" class="w-full bg-yellow-500 text-white py-1 px-3 rounded text-sm hover:bg-yellow-600">
+                📍 Google Maps
+              </button>
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      } else {
+        // Restricted popup for non-authenticated users (shop name only)
+        popupContent = `
+          <div class="p-3 max-w-xs">
+            <h3 class="font-bold text-gray-900 mb-2">${merchant.shop_name}</h3>
+            <div class="mt-3">
+              <p class="text-sm text-gray-500 text-center">🔒 Login required to view details</p>
+              <button onclick="window.location.href='/login'" class="w-full mt-2 bg-blue-600 text-white py-1 px-3 rounded text-sm hover:bg-blue-700">
+                Login to Access Features
+              </button>
+            </div>
+          </div>
+        `;
+      }
       
       marker.bindPopup(popupContent);
       markerGroup.addLayer(marker);

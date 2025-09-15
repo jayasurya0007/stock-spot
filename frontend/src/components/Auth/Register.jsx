@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import  LoadingSpinner from "../Loading/LoadingSpinner";
-import { UserPlus, AlertCircle } from 'lucide-react';
+import { UserPlus, AlertCircle, MapPin } from 'lucide-react';
 import { getCurrentLocation } from '../../utils/geolocation';
+import { merchantService } from '../../services/merchants';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -22,6 +23,7 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationStatus, setLocationStatus] = useState('');
+  const [addressLoading, setAddressLoading] = useState(false);
   
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -54,6 +56,37 @@ const Register = () => {
     } catch (error) {
       setLocationStatus(`Location error: ${error.userMessage}`);
       setLocationLoading(false);
+    }
+  };
+
+  const handleGetAddress = async () => {
+    if (!formData.latitude || !formData.longitude) {
+      setError('Please get location first to fetch address');
+      return;
+    }
+
+    try {
+      setAddressLoading(true);
+      setError('');
+      
+      const result = await merchantService.getAddressFromCoords(
+        formData.latitude, 
+        formData.longitude
+      );
+      
+      if (result.success && result.address) {
+        setFormData(f => ({ 
+          ...f, 
+          address: result.address 
+        }));
+      } else {
+        setError('Could not fetch address for your location');
+      }
+    } catch (error) {
+      console.error('Address fetch error:', error);
+      setError('Failed to get address. Please enter manually.');
+    } finally {
+      setAddressLoading(false);
     }
   };
 
@@ -261,15 +294,40 @@ const Register = () => {
                       <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
                         Shop Address
                       </label>
-                      <textarea
-                        id="address"
-                        name="address"
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
-                        value={formData.address}
-                        onChange={handleChange}
-                        placeholder="Enter your shop address"
-                        rows="2"
-                      />
+                      <div className="space-y-2">
+                        <textarea
+                          id="address"
+                          name="address"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                          value={formData.address}
+                          onChange={handleChange}
+                          placeholder="Enter your shop address or use 'Get Address' button"
+                          rows="2"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleGetAddress}
+                          disabled={!formData.latitude || !formData.longitude || addressLoading}
+                          className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                        >
+                          {addressLoading ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                              Getting Address...
+                            </>
+                          ) : (
+                            <>
+                              <MapPin size={16} />
+                              Get Address from Location
+                            </>
+                          )}
+                        </button>
+                        {!formData.latitude && (
+                          <p className="text-sm text-gray-500">
+                            📍 Get your location first to auto-fill address
+                          </p>
+                        )}
+                      </div>
                     </div>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

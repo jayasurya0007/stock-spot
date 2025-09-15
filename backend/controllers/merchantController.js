@@ -207,3 +207,37 @@ export const updateMerchantDetails = async (req, res) => {
     res.status(500).json({ error: 'Failed to update merchant details', details: err.message });
   }
 };
+
+// Get address from coordinates (reverse geocoding)
+export const getAddressFromCoords = async (req, res) => {
+  const { latitude, longitude } = req.query;
+
+  if (!latitude || !longitude) {
+    return res.status(400).json({ error: 'Latitude and longitude are required' });
+  }
+
+  try {
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+    
+    // Validate coordinate ranges
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      return res.status(400).json({ error: 'Invalid latitude or longitude values' });
+    }
+
+    const address = await reverseGeocode(lat, lng);
+    
+    if (!address) {
+      return res.status(404).json({ error: 'Address not found for the given coordinates' });
+    }
+
+    res.json({ 
+      success: true, 
+      address,
+      coordinates: { latitude: lat, longitude: lng }
+    });
+  } catch (err) {
+    console.error('Reverse geocoding failed:', err);
+    res.status(500).json({ error: 'Failed to get address from coordinates', details: err.message });
+  }
+};

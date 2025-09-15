@@ -40,14 +40,22 @@ StockSpot revolutionizes local commerce through **Agentic AI** systems that:
 **Result**: A thriving local economy where customers find what they need instantly, and merchants maximize their sales potential.
 
 ## ⚡ Quick Demo (No Setup Required)
-1. Visit [stock-spot.vercel.app](https://stock-spot.vercel.app)
-2. **Register/Login** as either "Customer" or "Merchant" (required for search functionality)
-3. Search: "teddy bear", "educational toys", or "toy car"
-4. Allow location or select "Chennai" from dropdown
-5. See AI-powered multi-step search in action
-6. **For Merchants**: Experience AI inventory management features
 
-**Note**: Without login, you can only view the map interface - search requires authentication.
+### **🗺️ Public Exploration (No Login)**
+1. Visit [stock-spot.vercel.app](https://stock-spot.vercel.app)
+2. **Explore Map**: View merchant locations with shop names only
+3. **Click Shops**: See shop names but no detailed features
+4. **Limited Access**: No product viewing, directions, or Google Maps integration
+
+### **🔐 Full Experience (Login Required)**  
+1. **Register/Login** as either "Customer" or "Merchant" 
+2. **Search**: "teddy bear", "educational toys", or "toy car"
+3. **Location**: Allow GPS or select "Chennai" from dropdown
+4. **AI Search**: See multi-step agentic AI processing in action
+5. **Shop Details**: View products, get directions, access Google Maps
+6. **For Merchants**: Experience AI inventory management and notifications
+
+**🎯 Privacy-First Design**: Authentication required for full functionality to protect merchant data and enable personalized experiences.
 
 ## 🎬 Demo Video
 
@@ -132,15 +140,24 @@ TiDB Vector Search → Geospatial Filtering → Ranked Results
 
 ## 🏆 Key Features & Functionality
 
-### **For Customers - Intelligent Product Discovery**
+### **🗺️ Public Map Exploration (No Login Required)**
+- **📍 Shop Discovery**: View merchant locations and basic shop names
+- **🔒 Privacy Protection**: Limited access protects merchant data
+- **👀 Platform Preview**: Explore interface before registering
+
+### **🔐 Authenticated User Features (Login Required)**
+
+#### **For Customers - Intelligent Product Discovery**
 - **🔍 Natural Language Search**: "something to charge my phone" finds phone chargers
 - **📍 Location-Aware Results**: Search within 1km to 50km radius
 - **🎯 Multi-Layer Matching**: Exact → Partial → Semantic similarity search
 - **🗺 Navigation Integration**: Direct Google Maps directions to stores
 - **⚡ Real-Time Data**: Live inventory prevents wasted store visits
+- **📱 Product Details**: View full merchant information, contact details, inventory
 
-### **For Merchants - AI-Powered Business Tools**
-- **📝 Auto-Enhanced Listings**: AI generates engaging product descriptions
+#### **For Merchants - AI-Powered Business Tools**
+- **� Smart Registration**: GPS location detection with auto-address generation
+- **�📝 Auto-Enhanced Listings**: AI generates engaging product descriptions
 - **🔔 Smart Notifications**: "Restock Organic Apples for weekend demand"
 - **📊 Business Intelligence**: Search visibility, inventory insights, customer patterns
 - **⚙️ Threshold Management**: Customizable low/critical stock alerts
@@ -246,10 +263,12 @@ StockSpot demonstrates the **future of local commerce** through:
 
 ### For Merchants:
 1. Click "Register" and select "Merchant"
-2. Provide your business information and location
-3. Start adding your products to the catalog
-4. Configure your notification preferences
-5. Begin receiving customer searches immediately
+2. **Auto-Location Setup**: Enable GPS for automatic location detection
+3. **Smart Address**: Use "Get Address from Location" for precise shop address
+4. Provide your business information and contact details
+5. Start adding your products to the catalog
+6. Configure your notification preferences  
+7. Begin receiving customer searches immediately
 
 ## 📄 Open Source License
 

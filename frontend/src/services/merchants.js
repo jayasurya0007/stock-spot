@@ -29,5 +29,10 @@ export const merchantService = {
   getMapData: async () => {
     const response = await api.get('/search/map-data');
     return response.data;
+  },
+
+  getAddressFromCoords: async (latitude, longitude) => {
+    const response = await api.get(`/merchant/address-from-coords?latitude=${latitude}&longitude=${longitude}`);
+    return response.data;
   }
 };
