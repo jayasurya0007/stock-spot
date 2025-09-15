@@ -6,7 +6,14 @@
 - **🔗 GitHub Repository**: [github.com/jayasurya0007/stock-spot](https://github.com/jayasurya0007/stock-spot)
 - **📧 TiDB Cloud Email**: jayasuryar849@gmail.com
 
-## 🎯 Problem Statement
+## �️ System Architecture
+
+![StockSpot Agentic AI Architecture](assets/StockSpot-Abstract-Architecture.png)
+*High-level system architecture showing Agentic AI workflows and TiDB vector search integration*
+
+**📋 [View Detailed Architecture](assets/StockSpot-Detailed-Architecture.png)** - Complete technical implementation diagram
+
+## �🎯 Problem Statement
 
 ### **The Local Commerce Challenge**
 Local commerce faces critical inefficiencies that hurt both customers and small businesses:
@@ -54,9 +61,6 @@ StockSpot revolutionizes local commerce through **Agentic AI** systems that:
 - **Business Impact**: Real merchant testimonials and usage
 
 ## 🧠 Agentic AI Architecture
-
-![StockSpot Agentic AI Architecture](assets/StockSpot-Abstract-Architecture.png)
-*Complete system architecture showing multi-step AI agents, TiDB vector search, and data flow*
 
 ### **Core Agentic AI Workflows** 
 
