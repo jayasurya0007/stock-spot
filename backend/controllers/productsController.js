@@ -1,7 +1,7 @@
 import { getEmbedding } from '../utils/embeddings.js';
 import { enhanceProductDescription } from '../utils/productDescriptionEnhancer.js';
 import pool from '../config/database.js';
-console.log("Loaded productController.js from:", import.meta.url);
+//console.log("Loaded productController.js from:", import.meta.url);
 
 const addProduct = async (req, res) => {
   const { name, price, quantity, description, category, enhanceDescription = true } = req.body;
@@ -28,7 +28,7 @@ const addProduct = async (req, res) => {
     let descriptionEnhancementInfo = null;
     
     if (enhanceDescription) {
-      console.log('🚀 Enhancing product description and generating category for:', name);
+      //console.log('🚀 Enhancing product description and generating category for:', name);
       const enhancementResult = await enhanceProductDescription({
         name, price, quantity, description, category
       });
@@ -45,7 +45,7 @@ const addProduct = async (req, res) => {
         error: enhancementResult.error
       };
       
-      console.log('📝 Enhancement result:', descriptionEnhancementInfo);
+      //console.log('📝 Enhancement result:', descriptionEnhancementInfo);
     }
     
     const embedding = await getEmbedding(name + " " + (finalDescription || ""));
@@ -117,7 +117,7 @@ const updateProduct = async (req, res) => {
     let descriptionEnhancementInfo = null;
     
     if (enhanceDescription) {
-      console.log('🚀 Enhancing product description during update for product ID:', product_id);
+      //console.log('🚀 Enhancing product description during update for product ID:', product_id);
       
       // Use new values if provided, otherwise use current values
       const enhancementData = {
@@ -142,7 +142,7 @@ const updateProduct = async (req, res) => {
         error: enhancementResult.error
       };
       
-      console.log('📝 Update enhancement result:', descriptionEnhancementInfo);
+      //console.log('📝 Update enhancement result:', descriptionEnhancementInfo);
     }
 
     // Build dynamic update query based on provided fields
@@ -308,7 +308,7 @@ const previewEnhancedDescription = async (req, res) => {
   }
 
   try {
-    console.log('🔍 Previewing enhanced description and category for:', name);
+    //console.log('🔍 Previewing enhanced description and category for:', name);
     const enhancementResult = await enhanceProductDescription({
       name, price, quantity, description, category
     });
@@ -431,4 +431,3 @@ const getMatchLevel = (matchPercentage) => {
 };
 
 export { addProduct, updateProduct, getMyProducts, deleteProduct, getProduct, previewEnhancedDescription, getRelatedProducts };
-console.log("Exports in productController.js:", { addProduct, updateProduct, getMyProducts, deleteProduct, getProduct, previewEnhancedDescription, getRelatedProducts });

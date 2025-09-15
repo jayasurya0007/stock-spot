@@ -29,14 +29,11 @@ export const addMerchant = async (req, res) => {
       
       // If no address provided but we have coordinates, generate address from coordinates
       if (!address || address.trim() === '') {
-        console.log('🗺️ No address provided during merchant creation, generating from coordinates:', { lat, lng });
+
         try {
           const generatedAddress = await getShortAddress(lat, lng);
           if (generatedAddress) {
             finalAddress = generatedAddress;
-            console.log('✅ Generated address for new merchant:', generatedAddress);
-          } else {
-            console.log('⚠️ Failed to generate address from coordinates');
           }
         } catch (error) {
           console.error('Error generating address from coordinates:', error);
@@ -162,14 +159,11 @@ export const updateMerchantDetails = async (req, res) => {
       
       // If no address provided but we have coordinates, generate address from coordinates
       if (!address || address.trim() === '') {
-        console.log('🗺️ No address provided, generating from coordinates:', { lat, lng });
+
         try {
           const generatedAddress = await getShortAddress(lat, lng);
           if (generatedAddress) {
             finalAddress = generatedAddress;
-            console.log('✅ Generated address:', generatedAddress);
-          } else {
-            console.log('⚠️ Failed to generate address from coordinates');
           }
         } catch (error) {
           console.error('Error generating address from coordinates:', error);

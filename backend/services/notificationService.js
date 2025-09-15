@@ -13,12 +13,12 @@ class NotificationService {
    * This is the main function called by the daily scheduler
    */
   static async processLowStockNotifications() {
-    console.log('🔄 Starting low stock notification process...');
+    //console.log('🔄 Starting low stock notification process...');
     
     try {
       // Get all merchants with notifications enabled
       const merchants = await NotificationSettings.getMerchantsWithNotificationsEnabled();
-      console.log(`📊 Found ${merchants.length} merchants with notifications enabled`);
+      //console.log(`📊 Found ${merchants.length} merchants with notifications enabled`);
       
       let totalNotificationsCreated = 0;
       
@@ -28,7 +28,7 @@ class NotificationService {
           const alreadySent = await NotificationSettings.wasNotificationSentToday(merchant.merchant_id);
           
           if (alreadySent) {
-            console.log(`⏭️  Skipping ${merchant.shop_name} - notification already sent today`);
+            //console.log(`⏭️  Skipping ${merchant.shop_name} - notification already sent today`);
             continue;
           }
           
@@ -42,7 +42,7 @@ class NotificationService {
         }
       }
       
-      console.log(`✅ Low stock notification process completed. Created ${totalNotificationsCreated} notifications.`);
+      //console.log(`✅ Low stock notification process completed. Created ${totalNotificationsCreated} notifications.`);
       return totalNotificationsCreated;
       
     } catch (error) {
@@ -64,11 +64,11 @@ class NotificationService {
       const lowStockProducts = await Product.findLowStock(merchant_id, low_stock_threshold);
       
       if (lowStockProducts.length === 0) {
-        console.log(`✅ No low stock products for ${shop_name}`);
+        //console.log(`✅ No low stock products for ${shop_name}`);
         return 0;
       }
       
-      console.log(`📦 Found ${lowStockProducts.length} low stock products for ${shop_name}`);
+     // console.log(`📦 Found ${lowStockProducts.length} low stock products for ${shop_name}`);
       
       // Separate critical and low stock products
       const criticalProducts = lowStockProducts.filter(p => p.quantity <= critical_stock_threshold);
@@ -110,7 +110,7 @@ class NotificationService {
       // Log that notifications were sent today
       await NotificationSettings.logNotificationSent(merchant_id, productIds);
       
-      console.log(`📨 Created ${notificationsCreated} notifications for ${shop_name}`);
+      //console.log(`📨 Created ${notificationsCreated} notifications for ${shop_name}`);
       return notificationsCreated;
       
     } catch (error) {
@@ -233,7 +233,7 @@ class NotificationService {
       };
       
       const notification = await Notification.create(notificationData);
-      console.log(`✅ Created notification: ${finalTitle}`);
+      //console.log(`✅ Created notification: ${finalTitle}`);
       
       return notification;
       

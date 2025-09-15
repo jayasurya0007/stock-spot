@@ -144,7 +144,7 @@ const EditProduct = () => {
       };
       
       const result = await productService.updateProduct(id, productData);
-      console.log('Product updated successfully:', result);
+      //console.log('Product updated successfully:', result);
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to update product');

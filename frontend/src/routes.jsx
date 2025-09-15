@@ -32,9 +32,9 @@ const AppRoutes = () => {
   const { user, isAuthenticated, loading } = useAuth();
   
   // Debug logging
-  console.log('AppRoutes - User:', user);
-  console.log('AppRoutes - isAuthenticated:', isAuthenticated);
-  console.log('AppRoutes - loading:', loading);
+  //console.log('AppRoutes - User:', user);
+  //console.log('AppRoutes - isAuthenticated:', isAuthenticated);
+  //console.log('AppRoutes - loading:', loading);
   
   if (loading) return <div className="loading">Loading...</div>;
   return (

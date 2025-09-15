@@ -19,7 +19,7 @@ export async function enhanceProductDescription(productData) {
         .replace(/\[[\d,\s]+\]/g, '')
         .trim();
       
-      console.log('🤖 AI Response:', cleanedContent);
+
       
       try {
         // Try to parse as JSON first
@@ -27,9 +27,9 @@ export async function enhanceProductDescription(productData) {
         enhancedDescription = parsedData.description || description || '';
         suggestedCategory = parsedData.category || category || '';
         
-        console.log('📦 Parsed JSON:', { description: enhancedDescription, category: suggestedCategory });
+
       } catch (jsonError) {
-        console.log('⚠️ Not valid JSON, attempting text extraction...');
+
         
         // If JSON parsing fails, try to extract manually
         const descMatch = cleanedContent.match(/description[:\s]*["']?([^"'\n}]+)["']?/i);
@@ -44,10 +44,7 @@ export async function enhanceProductDescription(productData) {
           const categoryMatch = aiResponse.match(/category[:\s]*([^.,\n"'}]+)/i);
           suggestedCategory = categoryMatch ? categoryMatch[1].trim() : category || '';
           
-          console.log('📝 Extracted from plain text:', { 
-            description: enhancedDescription, 
-            category: suggestedCategory 
-          });
+
         }
       }
     } else {
@@ -91,11 +88,6 @@ export async function enhanceProductDescription(productData) {
         cleanedCategory = cleanedCategory.substring(0, 50).trim();
       }
     }
-    
-    console.log('✅ Final cleaned values:', { 
-      description: cleanedDescription, 
-      category: cleanedCategory 
-    });
     
     return {
       originalDescription: description || '',

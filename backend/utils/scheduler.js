@@ -16,11 +16,11 @@ class NotificationScheduler {
    */
   start() {
     if (this.isRunning) {
-      console.log('📅 Notification scheduler is already running');
+
       return;
     }
 
-    console.log('🚀 Starting notification scheduler...');
+
     this.isRunning = true;
 
     // Check immediately on start
@@ -31,7 +31,7 @@ class NotificationScheduler {
       this.checkAndProcessNotifications();
     }, 60 * 1000); // 1 minute
 
-    console.log('✅ Notification scheduler started successfully');
+
   }
 
   /**
@@ -39,11 +39,11 @@ class NotificationScheduler {
    */
   stop() {
     if (!this.isRunning) {
-      console.log('📅 Notification scheduler is not running');
+
       return;
     }
 
-    console.log('🛑 Stopping notification scheduler...');
+
     
     if (this.intervalId) {
       clearInterval(this.intervalId);
@@ -51,7 +51,7 @@ class NotificationScheduler {
     }
     
     this.isRunning = false;
-    console.log('✅ Notification scheduler stopped successfully');
+    //console.log('✅ Notification scheduler stopped successfully');
   }
 
   /**
@@ -60,7 +60,7 @@ class NotificationScheduler {
   resetDailyTracking() {
     const today = new Date().toDateString();
     if (this.lastCheckDate !== today) {
-      console.log('🌅 New day detected - Resetting daily notification tracking');
+      //console.log('🌅 New day detected - Resetting daily notification tracking');
       this.processedToday.clear();
       this.lastCheckDate = today;
     }
@@ -78,7 +78,7 @@ class NotificationScheduler {
     // Only log every 30 minutes to reduce console spam
     const shouldLog = now.getMinutes() % 30 === 0;
     if (shouldLog) {
-      console.log(`⏰ Scheduler running: ${now.toLocaleTimeString()} - Individual merchants should check their notification times via frontend`);
+      //console.log(`⏰ Scheduler running: ${now.toLocaleTimeString()} - Individual merchants should check their notification times via frontend`);
     }
     
     // The scheduler now just runs as a heartbeat
@@ -90,10 +90,10 @@ class NotificationScheduler {
    * Manually trigger notification processing (for testing)
    */
   async triggerNow() {
-    console.log('🧪 Manually triggering notification processing...');
+    //console.log('🧪 Manually triggering notification processing...');
     try {
       const count = await NotificationService.processLowStockNotifications();
-      console.log(`✅ Manual trigger completed. Created ${count} notifications.`);
+      //console.log(`✅ Manual trigger completed. Created ${count} notifications.`);
       return count;
     } catch (error) {
       console.error('❌ Error in manual trigger:', error);

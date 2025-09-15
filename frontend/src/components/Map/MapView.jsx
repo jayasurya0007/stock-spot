@@ -254,7 +254,7 @@ const MapView = ({ publicView = false }) => {
             setUserLocation(newLocation);
           },
           (error) => {
-            console.log('Initial location detection failed, using default location');
+            //console.log('Initial location detection failed, using default location');
             // Don't set error state for initial load, just use default
           },
           {

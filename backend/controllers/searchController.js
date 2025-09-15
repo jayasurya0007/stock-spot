@@ -22,9 +22,7 @@ export const searchProducts = async (req, res) => {
 
   try {
     const refinedQuery = await rewriteQueryWithMoonshot(query);
-    console.log('🔍 Search Debug Info:');
-    console.log('Original query:', query);
-    console.log('Moonshot refined query:', refinedQuery);
+
     
     const embedding = getEmbedding(refinedQuery);
 
@@ -35,16 +33,14 @@ export const searchProducts = async (req, res) => {
     const refinedWords = refinedQuery ? refinedQuery.toLowerCase().split(/\s+/).filter(word => word.length > 2) : [];
     const allSearchTerms = [...searchTerms, ...refinedWords].filter((term, index, arr) => arr.indexOf(term) === index);
     
-    console.log('Search terms:', searchTerms);
-    console.log('Refined words:', refinedWords);
-    console.log('All search terms:', allSearchTerms);
+
     
     // Create exact match conditions - only match if the product name starts with the term or is the exact term
     const exactConditions = allSearchTerms.map(() => 
       '(LOWER(p.name) = LOWER(?) OR LOWER(p.name) LIKE LOWER(?) OR LOWER(p.category) = LOWER(?))'
     ).join(' OR ');
     const exactParams = allSearchTerms.flatMap(term => [term, `${term} %`, term]);
-    console.log('Exact match parameters:', exactParams);
+
     
     const [exactMatches] = await conn.execute(
       `SELECT
@@ -179,17 +175,7 @@ export const searchProducts = async (req, res) => {
 
     conn.release();
 
-    console.log('📊 Database Results:');
-    console.log('Exact matches found:', exactMatches.length);
-    console.log('Partial matches found:', partialMatches.length);
-    console.log('Related products found:', similarProducts.length);
-    
-    if (exactMatches.length > 0) {
-      console.log('Exact match products:', exactMatches.map(p => ({ name: p.name, category: p.category })));
-    }
-    if (partialMatches.length > 0) {
-      console.log('Partial match products:', partialMatches.map(p => ({ name: p.name, category: p.category })));
-    }
+
 
     // Process results with enhanced match percentage calculation
     const exactResults = exactMatches.map(row => ({

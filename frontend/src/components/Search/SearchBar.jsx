@@ -128,7 +128,7 @@ const SearchBar = ({ onSearch }) => {
           <button 
             type="button" 
             onClick={handleUseCurrentLocation}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
             disabled={gettingLocation}
           >
             {gettingLocation ? (
@@ -222,7 +222,7 @@ const SearchBar = ({ onSearch }) => {
         
         <button 
           type="submit" 
-          className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-all duration-300 shadow-md"
+          className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition-all duration-300 shadow-md"
         >
           Search Products
         </button>

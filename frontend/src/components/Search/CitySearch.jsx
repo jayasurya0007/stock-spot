@@ -20,7 +20,6 @@ const CitySearch = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => console.log('Location access denied or unavailable')
       );
     }
   }, []);

@@ -115,7 +115,7 @@ const AddProduct = () => {
       };
       
       const result = await productService.addProduct(productData);
-      console.log('Product added successfully:', result);
+      //console.log('Product added successfully:', result);
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to add product');
