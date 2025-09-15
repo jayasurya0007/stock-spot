@@ -1,6 +1,6 @@
 //utils/notificationEnhancer.js
 
-import { queryPerplexity } from './perplexity.js';
+import { queryMoonshot } from './moonshot.js';
 
 /**
  * Enhances notification messages using AI to make them more informative and actionable
@@ -90,7 +90,7 @@ Format your response as JSON:
 }`;
 
   try {
-    const aiResponse = await queryPerplexity(prompt);
+    const aiResponse = await queryMoonshot(prompt);
     
     // Clean up any potential citations or references
     const cleanedResponse = aiResponse

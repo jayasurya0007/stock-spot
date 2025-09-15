@@ -1,6 +1,6 @@
 //controllers/searchController.js
 
-import { rewriteQueryWithPerplexity } from '../utils/perplexity.js';
+import { rewriteQueryWithMoonshot } from '../utils/moonshot.js';
 import { getEmbedding } from '../utils/embeddings.js';
 import pool from '../config/database.js';
 
@@ -21,10 +21,10 @@ export const searchProducts = async (req, res) => {
   }
 
   try {
-    const refinedQuery = await rewriteQueryWithPerplexity(query);
+    const refinedQuery = await rewriteQueryWithMoonshot(query);
     console.log('🔍 Search Debug Info:');
     console.log('Original query:', query);
-    console.log('Perplexity refined query:', refinedQuery);
+    console.log('Moonshot refined query:', refinedQuery);
     
     const embedding = getEmbedding(refinedQuery);
 

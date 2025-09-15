@@ -1,32 +1,72 @@
 //controllers/merchatController.js
 
-import { geocodeAddress } from '../utils/geocode.js';
+import { geocodeAddress, reverseGeocode, getShortAddress } from '../utils/geocode.js';
 import pool from '../config/database.js';
 
 export const addMerchant = async (req, res) => {
-  const { shop_name, address, owner_name, phone } = req.body;
+  const { shop_name, address, owner_name, phone, latitude, longitude, use_manual_coords } = req.body;
 
-  if (!shop_name || !address) {
-    return res.status(400).json({ error: 'Shop name and address are required' });
+  if (!shop_name) {
+    return res.status(400).json({ error: 'Shop name is required' });
   }
 
   try {
-    const coords = await geocodeAddress(address);
+    let coords = null;
+    let finalAddress = address;
+
+    // Determine coordinates and address
+    if (use_manual_coords && latitude !== undefined && longitude !== undefined) {
+      // Use manual coordinates provided by user
+      const lat = parseFloat(latitude);
+      const lng = parseFloat(longitude);
+      
+      // Validate coordinate ranges
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        return res.status(400).json({ error: 'Invalid latitude or longitude values' });
+      }
+      
+      coords = { lat, lng };
+      
+      // If no address provided but we have coordinates, generate address from coordinates
+      if (!address || address.trim() === '') {
+        console.log('🗺️ No address provided during merchant creation, generating from coordinates:', { lat, lng });
+        try {
+          const generatedAddress = await getShortAddress(lat, lng);
+          if (generatedAddress) {
+            finalAddress = generatedAddress;
+            console.log('✅ Generated address for new merchant:', generatedAddress);
+          } else {
+            console.log('⚠️ Failed to generate address from coordinates');
+          }
+        } catch (error) {
+          console.error('Error generating address from coordinates:', error);
+        }
+      }
+    } else if (address) {
+      // Geocode address if provided
+      coords = await geocodeAddress(address);
+      if (!coords) {
+        return res.status(400).json({ error: 'Could not geocode address. Please provide valid address or use manual coordinates.' });
+      }
+    } else {
+      return res.status(400).json({ error: 'Either address or coordinates (latitude, longitude) are required' });
+    }
+
     if (!coords) {
-      return res.status(400).json({ error: 'Could not geocode address' });
+      return res.status(400).json({ error: 'Could not determine location. Please provide valid address or coordinates.' });
     }
 
     const conn = await pool.getConnection();
     const [result] = await conn.execute(
       'INSERT INTO merchants (shop_name, address, latitude, longitude, owner_name, phone, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [shop_name, address, coords.lat, coords.lng, owner_name || null, phone || null, req.user.id]
+      [shop_name, finalAddress || null, coords.lat, coords.lng, owner_name || null, phone || null, req.user.id]
     );
     conn.release();
 
     res.status(201).json({ 
       id: result.insertId, 
       shop_name, 
-      address, 
+      address: finalAddress, 
       location: coords,
       owner_name,
       phone
@@ -104,6 +144,7 @@ export const updateMerchantDetails = async (req, res) => {
 
     const merchantId = merchants[0].id;
     let coords = null;
+    let finalAddress = address;
     
     // Determine coordinates to use
     if (use_manual_coords && latitude !== undefined && longitude !== undefined) {
@@ -118,6 +159,22 @@ export const updateMerchantDetails = async (req, res) => {
       }
       
       coords = { lat, lng };
+      
+      // If no address provided but we have coordinates, generate address from coordinates
+      if (!address || address.trim() === '') {
+        console.log('🗺️ No address provided, generating from coordinates:', { lat, lng });
+        try {
+          const generatedAddress = await getShortAddress(lat, lng);
+          if (generatedAddress) {
+            finalAddress = generatedAddress;
+            console.log('✅ Generated address:', generatedAddress);
+          } else {
+            console.log('⚠️ Failed to generate address from coordinates');
+          }
+        } catch (error) {
+          console.error('Error generating address from coordinates:', error);
+        }
+      }
     } else if (address) {
       // Geocode address if provided and not using manual coordinates
       coords = await geocodeAddress(address);
@@ -131,13 +188,13 @@ export const updateMerchantDetails = async (req, res) => {
     if (coords) {
       await conn.execute(
         'UPDATE merchants SET shop_name = ?, address = ?, latitude = ?, longitude = ?, owner_name = ?, phone = ? WHERE id = ?',
-        [shop_name, address || null, coords.lat, coords.lng, owner_name || null, phone || null, merchantId]
+        [shop_name, finalAddress || null, coords.lat, coords.lng, owner_name || null, phone || null, merchantId]
       );
     } else {
       // Update without coordinates if neither address nor manual coords provided
       await conn.execute(
         'UPDATE merchants SET shop_name = ?, address = ?, owner_name = ?, phone = ? WHERE id = ?',
-        [shop_name, address || null, owner_name || null, phone || null, merchantId]
+        [shop_name, finalAddress || null, owner_name || null, phone || null, merchantId]
       );
     }
     
@@ -146,7 +203,7 @@ export const updateMerchantDetails = async (req, res) => {
     res.json({ 
       message: 'Merchant details updated successfully',
       shop_name,
-      address,
+      address: finalAddress,
       owner_name,
       phone,
       location: coords
