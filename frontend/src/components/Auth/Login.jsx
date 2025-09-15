@@ -38,8 +38,8 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-md p-6 sm:p-8">
+    <div className="min-h-screen bg-gray-50 flex items-start justify-center pt-4 pb-8 px-4 sm:px-6 lg:px-8 sm:pt-6 lg:pt-8">
+      <div className="max-w-md w-full bg-white rounded-xl shadow-md p-6 sm:p-8 mt-4 sm:mt-6">
         <div className="text-center mb-6 sm:mb-8">
           <div className="bg-blue-100 w-14 h-14 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center mx-auto mb-4">
             <User size={28} className="text-blue-600 sm:w-8 sm:h-8" />

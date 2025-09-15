@@ -103,8 +103,8 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+    <div className="min-h-screen bg-gray-50 pt-4 pb-8 px-4 sm:px-6 lg:px-8 sm:pt-6 lg:pt-8">
+      <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden mt-4 sm:mt-6">
         <div className="px-6 py-6 sm:px-8 sm:py-8">
           <div className="text-center mb-6 sm:mb-8">
             <div className="bg-blue-100 w-14 h-14 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center mx-auto mb-4">
