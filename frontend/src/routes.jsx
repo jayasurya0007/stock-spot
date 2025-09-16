@@ -6,6 +6,7 @@ import { useAuth } from './context/AuthContext';
 
 // Components
 import Layout from './components/Layout/Layout';
+import Home from './components/Home/Home';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import MerchantDashboard from './components/Merchant/MerchantDashboard';
@@ -43,11 +44,12 @@ const AppRoutes = () => {
       <Route path="/" element={<Layout />}>
         {/* Public routes for unauthenticated users */}
         {!isAuthenticated && <>
-          <Route index element={<LazyMapView publicView={true} />} />
+          <Route index element={<Home />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           <Route path="city-search" element={<CitySearch />} />
-          <Route path="*" element={<LazyMapView publicView={true} />} />
+          <Route path="map" element={<LazyMapView publicView={true} />} />
+          <Route path="*" element={<Home />} />
         </>}
         {/* Authenticated routes */}
         {isAuthenticated && <>
@@ -61,10 +63,11 @@ const AppRoutes = () => {
             </div>
           } />
           
-          {/* Merchant dashboard and inventory management */}
+          {/* Direct routing based on user role - no home page for authenticated users */}
           {user?.role === 'merchant' ? (
             <>
               <Route index element={<MerchantDashboard />} />
+              <Route path="dashboard" element={<MerchantDashboard />} />
               <Route path="products" element={<MerchantProducts />} />
               <Route path="products/add" element={<AddProduct />} />
               <Route path="products/edit/:id" element={<EditProduct />} />
@@ -72,9 +75,12 @@ const AppRoutes = () => {
               <Route path="notifications/settings" element={<NotificationSettings />} />
             </>
           ) : (
-            /* User dashboard: product search and map */
+            /* Customer routes - go directly to search */
             <Route index element={<SearchResults />} />
           )}
+          
+          {/* Home page only accessible via explicit path for authenticated users */}
+          <Route path="home" element={<Home />} />
           <Route path="search" element={<SearchResults />} />
           <Route path="city-search" element={<CitySearch />} />
           <Route path="map" element={<LazyMapView />} />
