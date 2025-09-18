@@ -16,7 +16,7 @@ import notificationScheduler from './utils/scheduler.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
 
 // Security middleware
 app.use(helmet());
@@ -48,7 +48,7 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT,'0.0.0.0',() => {
   //console.log(`Server running on port ${PORT}`);
   
   // Start the notification scheduler
